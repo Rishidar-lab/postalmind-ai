@@ -26,7 +26,7 @@ export function rateLimit(ip: string): { allowed: boolean; remaining: number; re
 
 setInterval(() => {
   const now = Date.now();
-  for (const [key, entry] of store.entries()) {
+  store.forEach((entry, key) => {
     if (now > entry.resetAt) store.delete(key);
-  }
+  });
 }, 300_000);
