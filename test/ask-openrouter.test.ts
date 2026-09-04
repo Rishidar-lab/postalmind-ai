@@ -163,4 +163,81 @@ describe('ask() with OpenRouter configured', () => {
     const r = await ask(TRCA_QUESTION);
     expect(r.classification).toBe('UNKNOWN');
   });
+
+  it('every result exposes a rationale (WHY THIS ANSWER) and non-empty limits (WHAT THIS DOES NOT ESTABLISH)', async () => {
+    global.fetch = mockChatCompletion('TRCA was revised in 2018 [S1].');
+    const { ask } = await import('@/lib/ask/answer');
+    const r = await ask(TRCA_QUESTION);
+    expect(r.rationale.length).toBeGreaterThan(0);
+    expect(r.rationale).toMatch(/retrieved/i);
+    expect(r.limits.length).toBeGreaterThan(0);
+  });
+
+  describe('model-quality gate — openrouter/free can select a model unsuited to grounded QA', () => {
+    afterEach(() => {
+      delete process.env.OPENROUTER_MODEL_FALLBACK;
+      resetConfigCache();
+      resetProviderCache();
+    });
+
+    it('a degenerate non-answer (e.g. a bare safety-classifier label) is rejected and degrades to source-only when no fallback is configured', async () => {
+      global.fetch = mockChatCompletion('User Safety: safe', 'nvidia/nemotron-3.5-content-safety:free');
+      const { ask } = await import('@/lib/ask/answer');
+      const r = await ask(TRCA_QUESTION);
+      expect(r.mode).toBe('extractive');
+      expect(r.answer).toMatch(/AI composition is temporarily unavailable/i);
+      expect(r.answer).not.toMatch(/User Safety/i);
+      expect(r.citations.length).toBeGreaterThan(0);
+    });
+
+    it('retries once with OPENROUTER_MODEL_FALLBACK and uses that response when it is usable', async () => {
+      process.env.OPENROUTER_MODEL_FALLBACK = 'good-provider/good-model:free';
+      resetConfigCache();
+      resetProviderCache();
+      let call = 0;
+      global.fetch = (async () => {
+        call += 1;
+        if (call === 1) {
+          return new Response(
+            JSON.stringify({ model: 'nvidia/nemotron-3.5-content-safety:free', choices: [{ message: { content: 'User Safety: safe' }, finish_reason: 'stop' }] }),
+            { status: 200 },
+          );
+        }
+        return new Response(
+          JSON.stringify({ model: 'good-provider/good-model:free', choices: [{ message: { content: 'TRCA was revised in 2018 [S1].' }, finish_reason: 'stop' }] }),
+          { status: 200 },
+        );
+      }) as typeof fetch;
+      const { ask } = await import('@/lib/ask/answer');
+      const r = await ask(TRCA_QUESTION);
+      expect(call).toBe(2);
+      expect(r.mode).toBe('model');
+      expect(r.model).toBe('good-provider/good-model:free');
+      expect(r.answer).toContain('[S1]');
+    });
+
+    it('degrades to source-only if the fallback model ALSO returns a degenerate response', async () => {
+      process.env.OPENROUTER_MODEL_FALLBACK = 'also-bad/model:free';
+      resetConfigCache();
+      resetProviderCache();
+      global.fetch = mockChatCompletion('User Safety: safe', 'always-bad:free');
+      const { ask } = await import('@/lib/ask/answer');
+      const r = await ask(TRCA_QUESTION);
+      expect(r.mode).toBe('extractive');
+      expect(r.answer).toMatch(/AI composition is temporarily unavailable/i);
+      expect(r.citations.length).toBeGreaterThan(0);
+    });
+
+    it('a real, substantive answer is never rejected by the quality gate even without a bracket citation on every sentence', async () => {
+      // Long enough and not a refusal — must pass through untouched, proving the
+      // gate doesn't over-fire on ordinary model prose.
+      global.fetch = mockChatCompletion(
+        'TRCA was revised in 2018 [S1]. This restructured the allowance into two levels linked to dearness allowance, with arrears paid for the intervening period between the recommendation and implementation dates.',
+      );
+      const { ask } = await import('@/lib/ask/answer');
+      const r = await ask(TRCA_QUESTION);
+      expect(r.mode).toBe('model');
+      expect(r.answer).toContain('[S1]');
+    });
+  });
 });

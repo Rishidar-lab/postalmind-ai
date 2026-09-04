@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getStore } from '@/lib/store';
 import { DEMO_CASE_ID } from '@/lib/store/seed';
 import { PatternView } from '@/components/evidence-views';
+import { detectPatterns, PATTERN_DISCLAIMER } from '@/lib/evidence/patterns';
 
 export const metadata: Metadata = { title: 'Pattern analysis' };
 export const dynamic = 'force-dynamic';
@@ -37,6 +38,8 @@ export default async function PatternsPage() {
 
       <PatternView categories={categories} isDemo={c?.isDemo ?? true} />
 
+      <ObservedPatterns items={items} />
+
       <section className="card text-[13px] text-muted">
         <p className="label-strong">Reading this table</p>
         <p className="mt-2">
@@ -56,5 +59,37 @@ function Metric({ label, value }: { label: string; value: string }) {
       <p className="text-[11px] uppercase tracking-wide text-faint">{label}</p>
       <p className="mt-0.5 font-serif text-lg">{value}</p>
     </div>
+  );
+}
+
+function ObservedPatterns({ items }: { items: Parameters<typeof detectPatterns>[0] }) {
+  const patterns = detectPatterns(items);
+  return (
+    <section className="card">
+      <p className="label-strong">Observed patterns (Target Pressure Analyzer 2.0)</p>
+      <p className="mt-1 text-[13px] text-muted">
+        Deterministic sequence/timing detection across dated evidence items — not a legal conclusion.
+      </p>
+      {patterns.length === 0 ? (
+        <p className="mt-3 text-[13px] text-muted">
+          No pattern from the current rule set was detected in this case&rsquo;s dated evidence.
+        </p>
+      ) : (
+        <ul className="mt-3 space-y-3">
+          {patterns.map((p) => (
+            <li key={p.id} className="rounded border border-line p-3 text-[13.5px]">
+              <p className="font-semibold" style={{ color: 'var(--warn)' }}>
+                {p.description}
+              </p>
+              <p className="mt-1 text-[12px] text-faint">
+                {p.dayCount} day(s) involved · {p.itemIds.length} evidence item(s) · categories:{' '}
+                {p.categoriesInvolved.map((c) => c.replace(/_/g, ' ').toLowerCase()).join(', ')}
+              </p>
+            </li>
+          ))}
+          <li className="text-[12px] text-faint">{PATTERN_DISCLAIMER}</li>
+        </ul>
+      )}
+    </section>
   );
 }

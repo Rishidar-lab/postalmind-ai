@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { listPassages, listSources } from '@/lib/sources/registry';
 import { SourceStatusChip } from '@/components/chips';
-import { DOCUMENT_TYPES } from '@/lib/sources/types';
+import { canIndependentlyVerify, DOCUMENT_TYPES, SOURCE_CLASS_LABELS } from '@/lib/sources/types';
 
 export const metadata: Metadata = {
   title: 'Source library',
@@ -49,20 +49,40 @@ export default function SourcesPage() {
             </div>
             <p className="mt-1 text-[13px] text-muted">
               {s.authority}
-              {s.date ? ` · ${s.date}` : ''}
+              {s.date ? ` · issued ${s.date}` : ''}
               {s.effectiveDate && s.effectiveDate !== s.date ? ` · effective ${s.effectiveDate}` : ''}
+              {s.supersededDate ? ` · superseded ${s.supersededDate}` : ''}
+              {s.documentNumber ? ` · ${s.documentNumber}` : ''}
             </p>
             <p className="mt-2 text-[14px]">{s.summary}</p>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-[12px] text-faint">
               <span className="badge normal-case tracking-normal">{prettyType(s.documentType)}</span>
+              <span
+                className="badge normal-case tracking-normal"
+                title={
+                  canIndependentlyVerify(s.sourceClass)
+                    ? 'Can independently establish an official rule once genuinely verified.'
+                    : 'Cannot independently establish an official rule, regardless of status.'
+                }
+              >
+                {SOURCE_CLASS_LABELS[s.sourceClass]}
+              </span>
               <span>{passagesBySource[s.id] ?? 0} passage(s)</span>
               {s.sha256 ? <span>sha256 recorded</span> : <span>no local mirror yet</span>}
+              {s.verifiedAt ? (
+                <span>verified {s.verifiedAt.slice(0, 10)}{s.verificationMethod ? ` (${s.verificationMethod})` : ''}</span>
+              ) : (
+                <span>not yet verified against primary document</span>
+              )}
               {s.tags.slice(0, 5).map((t) => (
                 <span key={t} className="badge normal-case tracking-normal">
                   {t}
                 </span>
               ))}
             </div>
+            {s.sections.length > 0 && (
+              <p className="mt-2 text-[12px] text-faint">Sections: {s.sections.join(' · ')}</p>
+            )}
             {s.sourceUrl && (
               <a
                 href={s.sourceUrl}

@@ -17,7 +17,7 @@ import type { ManualTimelineEvent } from '@/lib/evidence/timeline';
 
 export const DB_NAME = 'postalmind-vault';
 /** Bump on any store/index change and add a migration in db.ts. */
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 
 export const STORES = {
   cases: 'cases',
@@ -27,6 +27,10 @@ export const STORES = {
   extras: 'extras',
   audit: 'audit',
   meta: 'meta',
+  /** v2: GDS Workday Log entries — a personal work diary, deliberately kept
+   * separate from case evidence (no chain-of-custody/redaction model needed
+   * for "what time did my shift start today"). */
+  workday: 'workday',
 } as const;
 
 /** Per-case data that is neither a source nor an item. */

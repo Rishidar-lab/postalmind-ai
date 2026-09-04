@@ -80,7 +80,11 @@ function migrate(db: IDBDatabase, _tx: IDBTransaction, oldVersion: number, _newV
 
     db.createObjectStore(STORES.meta, { keyPath: 'key' });
   }
-  // future: if (oldVersion < 2) { … }
+  if (oldVersion < 2) {
+    const workday = db.createObjectStore(STORES.workday, { keyPath: 'id' });
+    workday.createIndex('date', 'date', { unique: false });
+  }
+  // future: if (oldVersion < 3) { … }
 }
 
 // --- promisified operations ------------------------------------------------

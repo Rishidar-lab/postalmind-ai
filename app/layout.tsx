@@ -1,7 +1,8 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
+import { ServiceWorkerRegister } from '@/components/sw-register';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://postalmind-ai.vercel.app';
 
@@ -26,6 +27,11 @@ export const metadata: Metadata = {
   },
   twitter: { card: 'summary', title: 'PostalMind AI', description: 'Ground reality. Verified.' },
   robots: { index: true, follow: true },
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'PostalMind AI' },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#1f3a5f',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -47,6 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Skip to content
         </a>
+        <ServiceWorkerRegister />
         <SiteHeader />
         <p className="disclaimer-strip">
           Independent project. Not affiliated with or endorsed by India Post or the Department of Posts.

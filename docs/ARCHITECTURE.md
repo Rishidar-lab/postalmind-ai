@@ -15,16 +15,21 @@
 
 ```
 app/
-  layout.tsx, page.tsx, not-found.tsx, globals.css
+  layout.tsx, page.tsx, not-found.tsx, globals.css, manifest.ts (PWA manifest)
+  icon-192/, icon-512/, icon-maskable/  route handlers generating real PNGs via next/og (no binary asset)
+  offline/                 offline-shell fallback page
+  dashboard/               real counts only — no vanity stats
   ask/                     source-grounded assistant (client island)
-  evidence/                dashboard, import, cases, cases/[id], timeline, patterns
+  evidence/                dashboard, import, cases, cases/[id], timeline, patterns (+ observed patterns)
+  changes/                 Rule Change Tracker — deterministic old/new text diff + verified-changes log
+  corrections/             corrections ledger (severity: typo/clarification/factual/source-upgrade/retraction)
   status/, status/health/  GDS status explorer + live health readout
-  ground-reality/          editorial index
-  tools/, tools/rti/, …    deterministic tools
+  ground-reality/          claim-card-based evidence series (individually linkable)
+  tools/, tools/rti/, tools/workday/, …  deterministic + local-only tools
   sources/, methodology/, privacy/, disclaimer/
   api/
     health/                GET — app/ai/db/storage status (no secrets)
-    ask/                   POST — structured AskResult
+    ask/                   POST — structured AskResult (citation-grade: rationale + limits)
     chat/                  POST — SSE stream of the grounded answer + meta
     sources/               GET  — source library
     evidence/parse/        POST — stateless parse + classify + PII + timeline (NO AI, NO persistence)
@@ -33,25 +38,39 @@ app/
     evidence/cases/[id]/   GET — case + items + timeline + audit
 
 lib/
-  config.ts                env parsing, demo-mode detection
+  config.ts                env parsing, demo-mode detection, OpenRouter primary/fallback model
   http.ts                  bounded body reading, hashed client id, error helpers
   rate-limit.ts            in-process fixed-window limiter
-  ai/                      Provider interface, openrouter.ts, demo.ts, index.ts
-  ask/answer.ts            retrieve → constrain → classify → cite
-  sources/                 types.ts, registry.ts (lexical retrieval)
+  ai/                      Provider interface, openrouter.ts (+ model-override for the quality-gate
+                           fallback), demo.ts, index.ts (getProvider/getFallbackProvider)
+  ask/answer.ts            retrieve → constrain → quality-gate → classify → cite → rationale/limits
+  sources/                 types.ts (SourceRecord + sourceClass + canIndependentlyVerify),
+                           trust.ts (suggestSourceClass, verificationViolations),
+                           registry.ts (lexical retrieval; allVerified enforces sourceClass),
+                           diff.ts (deterministic word-level LCS diff for /changes)
   evidence/                types, whatsapp, hash, pii, redaction, classify,
-                           strength, timeline, publication, audit, ingest
+                           strength, timeline, publication, audit, ingest,
+                           patterns.ts (Target Pressure Analyzer 2.0 — deterministic
+                           cross-day pattern detection, never a legal conclusion)
   store/                   CaseStore interface, memory.ts, seed.ts, index.ts
+  storage/                 IndexedDB vault (schema.ts/db.ts — v2 adds the `workday` store),
+                           case-store, evidence-store, audit-store, backup
   tools/rti.ts             deterministic RTI draft generator
+  tools/workday.ts         GDS Workday Log — local IndexedDB diary + weekly/monthly chronology
   demo/                    synthetic Mela WhatsApp export
 
 content/
-  sources.ts               SourceRecord[] (metadata → official docs)
+  sources.ts               SourceRecord[] (metadata → official docs; sourceClass assigned per record)
   corpus.ts                CorpusPassage[] (retrieval text; UNVERIFIED/DEMO)
+  changes.ts               RuleChange[] — starts empty, same honest pattern as corrections.ts
+  corrections.ts           Correction[] — severity-typed, starts empty
+  linkedin/                Ground Reality LinkedIn content pack (manual publish only)
 
-components/                 site chrome + client islands + shared views
+components/                 site chrome + client islands + shared views (claim-card.tsx,
+                            rule-diff-client.tsx, workday-client.tsx, sw-register.tsx, …)
 docs/                       this folder
 test/                       vitest suites
+public/sw.js                app-shell service worker (never caches /api/*)
 ```
 
 ## Request flows
@@ -65,9 +84,16 @@ question
   → getProvider()
        demo:       extractive answer from passages
        openrouter: generate() with system prompt = rules + passages only
-  → findUncitedClaims(answer)       flag factual sentences with no [S#]
+       → quality gate: isLowQualityCompletion()? → retry once on getFallbackProvider(),
+         else degrade to source-only. Never lets model availability decide VERIFIED status.
+  → findUncitedClaims(answer) + findFabricatedRefs(answer)   flag/void unsupported [S#] refs
   → classify: VERIFIED | INFERENCE | UNVERIFIED | UNKNOWN
-  → AskResult { classification, answer, citations, retrieval, notice, warnings }
+      VERIFIED requires EVERY cited passage: status VERIFIED AND source.sourceClass
+      independently-verifiable (PRIMARY_OFFICIAL/PRIMARY_JUDICIAL/PARLIAMENTARY_OFFICIAL).
+      A UNION_OR_ASSOCIATION/NEWS_REPORT/SECONDARY_REPUTABLE/DEMO source can never
+      independently produce VERIFIED, even if its status is mistakenly set to VERIFIED.
+  → AskResult { classification, answer, citations, retrieval, notice, warnings,
+                rationale ("why this answer"), limits ("what this does not establish") }
 ```
 
 ### `/evidence/import` → `/api/evidence/parse`

@@ -148,8 +148,15 @@ async function withRetry<T>(fn: () => Promise<T>, maxRetries: number): Promise<T
   throw lastErr;
 }
 
-export function createOpenRouterProvider(): Provider {
-  const { ai } = getConfig();
+/**
+ * @param modelOverride When set, this provider instance uses this model
+ * instead of the configured primary — used to construct the fallback
+ * provider for the model-quality gate (lib/ask/answer.ts) without
+ * duplicating this whole module.
+ */
+export function createOpenRouterProvider(modelOverride?: string): Provider {
+  const { ai: baseAi } = getConfig();
+  const ai = modelOverride ? { ...baseAi, model: modelOverride } : baseAi;
 
   const generate = async (opts: GenerateOptions): Promise<GenerateResult> => {
     if (!ai.configured) throw new ProviderError('not_configured', 'AI provider is not configured.', 503);

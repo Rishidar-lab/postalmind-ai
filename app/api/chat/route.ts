@@ -78,6 +78,8 @@ export async function POST(req: Request) {
         mode: result.mode,
         model: result.model,
         uncitedClaimWarnings: result.uncitedClaimWarnings,
+        rationale: result.rationale,
+        limits: result.limits,
       });
       send('done', {});
       controller.close();

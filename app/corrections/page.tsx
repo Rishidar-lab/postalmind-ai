@@ -39,7 +39,15 @@ export default function CorrectionsPage() {
             <li key={c.id} className="card">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="font-mono text-[12px] text-faint">{c.date}</p>
-                <span className="badge normal-case tracking-normal">{c.location}</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className="badge normal-case tracking-normal"
+                    style={c.severity === 'RETRACTION' || c.severity === 'FACTUAL_CORRECTION' ? { borderColor: 'var(--danger)', color: 'var(--danger)' } : undefined}
+                  >
+                    {c.severity.replace(/_/g, ' ').toLowerCase()}
+                  </span>
+                  <span className="badge normal-case tracking-normal">{c.location}</span>
+                </div>
               </div>
               <dl className="mt-3 space-y-2 text-[13px]">
                 <div>

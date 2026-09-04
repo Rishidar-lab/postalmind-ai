@@ -17,7 +17,7 @@
  * knowledge.
  */
 
-import { getProvider } from '@/lib/ai';
+import { getFallbackProvider, getProvider } from '@/lib/ai';
 import { ProviderError } from '@/lib/ai/types';
 import {
   assessRetrieval,
@@ -54,6 +54,10 @@ export interface AskResult {
   notice: string;
   /** Claims in the model answer that did not cite a provided source. */
   uncitedClaimWarnings: string[];
+  /** WHY THIS ANSWER — a deterministic, factual account of the retrieval/classification basis. Never model-generated. */
+  rationale: string;
+  /** WHAT THIS DOES NOT ESTABLISH — always populated, even for VERIFIED. Never model-generated. */
+  limits: string[];
 }
 
 const INDEPENDENCE =
@@ -154,6 +158,94 @@ function findFabricatedRefs(answer: string, refs: string[]): string[] {
   return [...found];
 }
 
+/**
+ * WHY THIS ANSWER — deterministic, built from retrieval facts only. Never
+ * asks the model to explain itself (that would just be more generated text
+ * to distrust).
+ */
+function buildRationale(
+  retrieval: RetrievalConfidence,
+  mode: AskResult['mode'],
+  classification: AnswerClassification,
+  sourceCount: number,
+): string {
+  if (mode === 'none') {
+    return 'No source in PostalMind’s library scored high enough relevance to this question, so no answer was composed and no model was called.';
+  }
+  const base = `Retrieved ${retrieval.passageCount} passage(s) from ${sourceCount} source(s), top relevance ${Math.round(retrieval.topScore * 100)}%.`;
+  if (mode === 'extractive') {
+    return `${base} No language model composed prose for this answer — the retrieved passages are shown directly.`;
+  }
+  const why: Record<AnswerClassification, string> = {
+    VERIFIED:
+      'Every cited passage is status VERIFIED and comes from a source class that can independently establish an official rule.',
+    INFERENCE: 'The answer reasons across two or more cited passages rather than quoting a single one directly.',
+    UNVERIFIED:
+      'At least one cited passage is an unverified project summary, demo content, or otherwise cannot independently establish an official rule yet.',
+    UNKNOWN: 'The model judged the retrieved passages insufficient to answer, or its response was rejected before classification.',
+  };
+  return `${base} ${why[classification]}`;
+}
+
+/**
+ * WHAT THIS DOES NOT ESTABLISH — always populated. Deterministic, not
+ * model-generated, so it can never be talked out of appearing.
+ */
+function buildLimits(
+  classification: AnswerClassification,
+  retrieval: RetrievalConfidence,
+  fabricatedRefCount: number,
+): string[] {
+  const limits: string[] = [];
+  switch (classification) {
+    case 'UNKNOWN':
+      limits.push(
+        'This does not establish that no such rule exists — only that PostalMind could not support an answer from its current source library.',
+      );
+      break;
+    case 'UNVERIFIED':
+      limits.push(
+        'This does not confirm the cited passages against their primary documents — a maintainer has not yet checked them line-by-line.',
+      );
+      if (retrieval.anyDemo) {
+        limits.push('At least one cited item is synthetic demo content, not a real case, and must never be treated as one.');
+      }
+      break;
+    case 'INFERENCE':
+      limits.push('This combines multiple sources through reasoning, not a single direct quote — verify each cited source before relying on it.');
+      break;
+    case 'VERIFIED':
+      limits.push('This is limited to what the cited passage states — it does not cover circumstances the passage does not address.');
+      break;
+  }
+  if (fabricatedRefCount > 0) {
+    limits.push('The model cited at least one source reference PostalMind did not retrieve; that specific citation is unsupported and has been flagged separately.');
+  }
+  return limits;
+}
+
+/**
+ * OpenRouter model-quality gate. `openrouter/free` is a router — it can
+ * occasionally select a model unsuited to grounded QA (observed live: a
+ * content-safety classifier returning "User Safety: safe" as if it were an
+ * answer). This rejects a response that is neither a recognisable refusal
+ * nor carries a citation and is too short to be a real substantive answer,
+ * WITHOUT ever deciding factual verification status — a rejected response
+ * never reaches classification at all; it is treated exactly like a
+ * provider error and degrades to the deterministic source-only answer.
+ */
+function isLowQualityCompletion(text: string, refs: string[]): boolean {
+  const t = text.trim();
+  if (t.length === 0) return true;
+  const looksLikeRefusal = /could not|cannot|do not (?:have|find)|not (?:enough|sufficient|covered)|no source/i.test(
+    t.slice(0, 240),
+  );
+  if (looksLikeRefusal) return false;
+  const hasCitation = refs.some((r) => t.includes(`[${r}]`));
+  if (hasCitation) return false;
+  return t.length < 120;
+}
+
 export interface AskOptions {
   history?: Array<{ role: 'user' | 'assistant'; content: string }>;
   signal?: AbortSignal;
@@ -176,10 +268,13 @@ export async function ask(question: string, opts: AskOptions = {}): Promise<AskR
       model: null,
       notice: NOTICE.UNKNOWN,
       uncitedClaimWarnings: [],
+      rationale: buildRationale(retrieval, 'none', 'UNKNOWN', 0),
+      limits: buildLimits('UNKNOWN', retrieval, 0),
     };
   }
 
   const citations = toCitations(passages);
+  const sourceCount = new Set(passages.map((p) => p.sourceId)).size;
   const provider = getProvider();
   const refs = citations.map((c) => c.ref);
 
@@ -199,20 +294,41 @@ export async function ask(question: string, opts: AskOptions = {}): Promise<AskR
       model: null,
       notice: NOTICE[classification],
       uncitedClaimWarnings: [],
+      rationale: buildRationale(retrieval, 'extractive', classification, sourceCount),
+      limits: buildLimits(classification, retrieval, 0),
     };
   }
 
   // Model mode: constrained generation.
   const system = buildSystemPrompt(q, citations, passages);
   const history = (opts.history ?? []).slice(-6);
+  const genOpts = {
+    system,
+    turns: [...history, { role: 'user' as const, content: q }],
+    temperature: 0.1,
+    maxOutputTokens: 900,
+    signal: opts.signal,
+  };
   try {
-    const result = await provider.generate({
-      system,
-      turns: [...history, { role: 'user', content: q }],
-      temperature: 0.1,
-      maxOutputTokens: 900,
-      signal: opts.signal,
-    });
+    let result = await provider.generate(genOpts);
+
+    // Model-quality gate: openrouter/free is a router and can occasionally
+    // select a model unsuited to grounded QA (e.g. a safety classifier
+    // returning a bare label instead of prose). A rejected response never
+    // reaches classification — retry at most once with the configured
+    // fallback model, else fall through to the deterministic source-only
+    // answer via the same path as a real provider error.
+    if (isLowQualityCompletion(result.text, refs)) {
+      const fallback = getFallbackProvider();
+      if (fallback) {
+        console.error(`[ask] primary model response unusable (model=${result.model}); retrying once with fallback model`);
+        result = await fallback.generate(genOpts);
+      }
+      if (isLowQualityCompletion(result.text, refs)) {
+        console.error(`[ask] no usable model response (model=${result.model}, fallback ${fallback ? 'tried' : 'not configured'}); degrading to source-only`);
+        throw new ProviderError('empty', 'The AI provider returned an unusable response for this question.', 502, false);
+      }
+    }
 
     const uncited = findUncitedClaims(result.text, refs);
     const fabricatedRefs = findFabricatedRefs(result.text, refs);
@@ -250,15 +366,19 @@ export async function ask(question: string, opts: AskOptions = {}): Promise<AskR
       model: result.model,
       notice: NOTICE[classification],
       uncitedClaimWarnings: [...uncited, ...fabricationWarnings],
+      rationale: buildRationale(retrieval, 'model', classification, sourceCount),
+      limits: buildLimits(classification, retrieval, fabricatedRefs.length),
     };
   } catch (err) {
     if (err instanceof ProviderError) {
       // Internal diagnostics only — kind, never the secret or raw provider body.
       console.error(`[ask] provider unavailable (${err.kind}): ${err.message}`);
       // Fall back to extractive rather than failing the whole request or
-      // surfacing a raw provider error kind to the user.
+      // surfacing a raw provider error kind to the user. Model availability
+      // (including a rejected low-quality response) never decides factual
+      // verification status — it only ever degrades to this same path.
       return {
-        classification: retrieval.anyDemo ? 'UNVERIFIED' : 'UNVERIFIED',
+        classification: 'UNVERIFIED',
         answer:
           'AI composition is temporarily unavailable. PostalMind is showing the retrieved source material directly.\n\n' +
           extractiveAnswer(q, citations, passages),
@@ -268,6 +388,8 @@ export async function ask(question: string, opts: AskOptions = {}): Promise<AskR
         model: null,
         notice: NOTICE.UNVERIFIED,
         uncitedClaimWarnings: [],
+        rationale: buildRationale(retrieval, 'extractive', 'UNVERIFIED', sourceCount),
+        limits: buildLimits('UNVERIFIED', retrieval, 0),
       };
     }
     throw err;

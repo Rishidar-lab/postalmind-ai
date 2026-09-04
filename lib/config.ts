@@ -14,6 +14,14 @@ export interface AppConfig {
     provider: 'openrouter' | 'demo';
     configured: boolean;
     model: string;
+    /**
+     * Optional second model for the quality gate (lib/ask/answer.ts): if the
+     * primary model's response is rejected as unusable for grounded QA, this
+     * is tried once before degrading to the deterministic source-only
+     * answer. Null when OPENROUTER_MODEL_FALLBACK is not set — the gate
+     * still rejects a bad response, it just has nothing to retry with.
+     */
+    fallbackModel: string | null;
     /** Base URL for the OpenRouter chat-completions API. */
     baseUrl: string;
     /** Optional attribution headers OpenRouter uses for free-tier routing/analytics. */
@@ -69,7 +77,10 @@ export function getConfig(): AppConfig {
       // Deliberately NOT hard-coded to one free model: OpenRouter picks among
       // currently-available free models for "openrouter/free", and an explicit
       // "provider/model:free" variant can be set without a code change.
-      model: process.env.OPENROUTER_MODEL?.trim() || 'openrouter/free',
+      // OPENROUTER_MODEL_PRIMARY takes precedence over OPENROUTER_MODEL if both
+      // are set, so existing deployments keep working unchanged.
+      model: process.env.OPENROUTER_MODEL_PRIMARY?.trim() || process.env.OPENROUTER_MODEL?.trim() || 'openrouter/free',
+      fallbackModel: process.env.OPENROUTER_MODEL_FALLBACK?.trim() || null,
       baseUrl: process.env.OPENROUTER_BASE_URL?.trim() || 'https://openrouter.ai/api/v1',
       siteUrl: process.env.OPENROUTER_SITE_URL?.trim() || null,
       appName: process.env.OPENROUTER_APP_NAME?.trim() || 'PostalMind AI',

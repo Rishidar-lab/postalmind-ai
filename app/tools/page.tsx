@@ -6,6 +6,7 @@ export const metadata: Metadata = { title: 'Tools' };
 const TOOLS = [
   { href: '/tools/rti', t: 'RTI drafting', s: 'Generate a properly formatted RTI application with the correct structure and placeholders. Deterministic — no AI.', ready: true },
   { href: '/tools/timeline', t: 'Incident timeline generator', s: 'Build a PRE/EVENT/POST timeline from a WhatsApp export.', ready: true },
+  { href: '/tools/workday', t: 'Workday log', s: 'A local, day-by-day record of scheduled vs. actual hours, duties and after-hours communication, with a weekly chronology.', ready: true },
   { href: '/tools/grievance', t: 'Grievance / representation drafting', s: 'Structured administrative representation from selected evidence.', ready: false },
 ];
 

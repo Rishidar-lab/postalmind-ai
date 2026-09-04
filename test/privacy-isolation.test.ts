@@ -15,10 +15,10 @@ import { resetProviderCache } from '@/lib/ai';
 describe('private-evidence isolation from the model', () => {
   it('ask pipeline sends only question + retrieved passages (no evidence channel)', async () => {
     const src = readFileSync(join(process.cwd(), 'lib/ask/answer.ts'), 'utf8');
-    // The provider.generate call carries system + turns only.
-    expect(src).toMatch(/provider\.generate\(\{/);
-    expect(src).toContain('system');
-    expect(src).toContain('turns');
+    // The provider.generate/fallback.generate calls carry the same genOpts
+    // object, built from system + turns only.
+    expect(src).toMatch(/(?:provider|fallback)\.generate\((?:\{|genOpts)/);
+    expect(src).toMatch(/const genOpts = \{[\s\S]*?system,[\s\S]*?turns:/);
     // No evidence-shaped payload reaches the model.
     expect(src).not.toMatch(/rawExcerpt|rawText|whatsapp|EvidenceItem|vault|private/i);
   });

@@ -5,10 +5,12 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
 const NAV = [
+  { href: '/dashboard', label: 'Dashboard' },
   { href: '/ask', label: 'Ask' },
   { href: '/evidence', label: 'Evidence' },
   { href: '/status', label: 'Know Your Status' },
   { href: '/sources', label: 'Sources' },
+  { href: '/changes', label: 'Rule Changes' },
   { href: '/ground-reality', label: 'Ground Reality' },
   { href: '/tools', label: 'Tools' },
   { href: '/methodology', label: 'Methodology' },

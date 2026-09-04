@@ -24,6 +24,8 @@ interface AskResult {
   model: string | null;
   retrieval: { level: string; passageCount: number };
   uncitedClaimWarnings: string[];
+  rationale: string;
+  limits: string[];
 }
 
 const EXAMPLES = [
@@ -134,6 +136,25 @@ export function AskClient() {
             <p className="mt-3 whitespace-pre-wrap text-[15px] leading-relaxed">{result.answer}</p>
             <p className="mt-4 border-t border-line pt-3 text-[12.5px] text-muted">{result.notice}</p>
             <p className="mt-1 text-[11.5px] text-faint">Sources determine verification status; the model does not.</p>
+
+            <details className="mt-3 text-[12.5px]">
+              <summary className="cursor-pointer select-none text-muted">Why this answer / what it does not establish</summary>
+              <div className="mt-2 space-y-2 border-t border-line pt-2">
+                <div>
+                  <p className="label-strong">Why this answer</p>
+                  <p className="mt-1 text-muted">{result.rationale}</p>
+                </div>
+                <div>
+                  <p className="label-strong">What this does NOT establish</p>
+                  <ul className="mt-1 list-disc pl-5 text-muted">
+                    {result.limits.map((l, i) => (
+                      <li key={i}>{l}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </details>
+
             {result.uncitedClaimWarnings.length > 0 && (
               <div className="mt-3 rounded border border-line bg-accent-soft p-3 text-[12.5px]">
                 <p className="font-semibold" style={{ color: 'var(--warn)' }}>

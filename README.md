@@ -120,6 +120,8 @@ npm run verify      # all of the above
 |---|---|---|---|
 | `OPENROUTER_API_KEY` | No | — | Enables model-composed answers via OpenRouter. Without it, the app runs in demo mode (extractive answers only). Never sent to the client. |
 | `OPENROUTER_MODEL` | No | `openrouter/free` | OpenRouter model id — change without a code deploy. Accepts explicit `provider/model:free` variants. |
+| `OPENROUTER_MODEL_PRIMARY` | No | — | Same meaning as `OPENROUTER_MODEL`; takes precedence if both are set. |
+| `OPENROUTER_MODEL_FALLBACK` | No | — | A second model the quality gate retries once if the primary model's response is rejected as unusable for grounded QA (see `lib/ask/answer.ts`). Unset = degrade straight to source-only. |
 | `OPENROUTER_SITE_URL` | No | — | Optional `HTTP-Referer` attribution header for OpenRouter. |
 | `OPENROUTER_APP_NAME` | No | `PostalMind AI` | Optional `X-Title` attribution header for OpenRouter. |
 | `OPENROUTER_BASE_URL` | No | OpenRouter endpoint | Override the API base URL (rarely needed). |

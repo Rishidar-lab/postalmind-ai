@@ -8,6 +8,7 @@
 
 import { CORPUS } from '@/content/corpus';
 import { SOURCES, SOURCE_BY_ID } from '@/content/sources';
+import { canIndependentlyVerify } from './types';
 import type { CorpusPassage, RetrievedPassage, SourceRecord } from './types';
 
 export function listSources(): SourceRecord[] {
@@ -106,8 +107,16 @@ export function assessRetrieval(passages: RetrievedPassage[]): RetrievalConfiden
     return { level: 'none', topScore: 0, passageCount: 0, allVerified: false, anyDemo: false };
   }
   const topScore = passages[0].score;
-  const allVerified = passages.every((p) => p.status === 'VERIFIED');
-  const anyDemo = passages.some((p) => p.status === 'DEMO');
+  // "Verified" here means genuinely eligible to be treated as official
+  // authority: the passage itself is checked (status VERIFIED) AND its
+  // source's class is one that can independently establish an official
+  // rule (lib/sources/types.ts#canIndependentlyVerify). A union circular,
+  // news report or secondary summary can be marked VERIFIED-status by
+  // mistake and still never flip an answer to VERIFIED through this check.
+  const allVerified = passages.every(
+    (p) => p.status === 'VERIFIED' && canIndependentlyVerify(p.source.sourceClass),
+  );
+  const anyDemo = passages.some((p) => p.status === 'DEMO' || p.source.sourceClass === 'DEMO');
   const level: RetrievalConfidence['level'] =
     topScore >= 0.6 && passages.length >= 2 ? 'strong' : topScore >= 0.35 ? 'moderate' : 'weak';
   return { level, topScore, passageCount: passages.length, allVerified, anyDemo };
