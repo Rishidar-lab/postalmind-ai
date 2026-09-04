@@ -1,22 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { publicationSafetyCheck, type PublicationReport } from '@/lib/evidence/publication';
 import { VerdictChip } from './chips';
-
-interface CheckItem {
-  id: string;
-  question: string;
-  result: 'PASS' | 'WARN' | 'BLOCK';
-  detail: string;
-}
-interface Report {
-  verdict: 'PASS' | 'WARN' | 'BLOCK';
-  canExport: boolean;
-  items: CheckItem[];
-  blockers: string[];
-  warnings: string[];
-  pii: { summary: { total: number } };
-}
 
 export function PublicationCheck({ initialText = '' }: { initialText?: string }) {
   const [text, setText] = useState(initialText);
@@ -27,32 +13,23 @@ export function PublicationCheck({ initialText = '' }: { initialText?: string })
   const [sourceCited, setSource] = useState(false);
   const [assertsLegal, setLegal] = useState(false);
   const [legalAuthoritative, setLegalAuth] = useState(false);
-  const [report, setReport] = useState<Report | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [report, setReport] = useState<PublicationReport | null>(null);
 
-  async function run() {
-    if (!text.trim() || loading) return;
-    setLoading(true);
-    try {
-      const res = await fetch('/api/evidence/publication-check', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text,
-          namesIndividuals,
-          namesAreNecessary: namesNecessary,
-          counterEvidenceConsidered: counterConsidered,
-          contextRetained,
-          sourceCited,
-          assertsLegalConclusion: assertsLegal,
-          legalConclusionIsAuthoritative: legalAuthoritative,
-        }),
-      });
-      const json = await res.json();
-      setReport(res.ok ? (json as Report) : null);
-    } finally {
-      setLoading(false);
-    }
+  function run() {
+    if (!text.trim()) return;
+    // LOCAL-FIRST: 12-point check runs in this browser tab. No network.
+    setReport(
+      publicationSafetyCheck({
+        text,
+        namesIndividuals,
+        namesAreNecessary: namesNecessary,
+        counterEvidenceConsidered: counterConsidered,
+        contextRetained,
+        sourceCited: text.trim().length > 0 ? sourceCited : undefined,
+        assertsLegalConclusion: assertsLegal,
+        legalConclusionIsAuthoritative: legalAuthoritative,
+      }),
+    );
   }
 
   return (
@@ -60,6 +37,7 @@ export function PublicationCheck({ initialText = '' }: { initialText?: string })
       <label htmlFor="pubtext" className="label-strong">
         Text to publish
       </label>
+      <p className="mt-1 text-[12px] text-faint">Checked locally on this device — not uploaded.</p>
       <textarea
         id="pubtext"
         className="field mt-2 min-h-[120px] resize-y text-[13px]"
@@ -78,8 +56,8 @@ export function PublicationCheck({ initialText = '' }: { initialText?: string })
           <Toggle label="…backed by a court/tribunal/official finding" checked={legalAuthoritative} onChange={setLegalAuth} />
         )}
       </fieldset>
-      <button type="button" className="btn btn-primary mt-3" onClick={run} disabled={loading || !text.trim()}>
-        {loading ? 'Checking…' : 'Run safety check'}
+      <button type="button" className="btn btn-primary mt-3" onClick={run} disabled={!text.trim()}>
+        Run safety check
       </button>
 
       {report && (

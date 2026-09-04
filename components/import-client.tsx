@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { analyzeWhatsAppText, type LocalAnalysis } from '@/lib/evidence/analyze';
 import type { EvidenceItem } from '@/lib/evidence/types';
 import type { Timeline } from '@/lib/evidence/timeline';
 import { EvidenceItemCard, TimelineView } from './evidence-views';
@@ -16,23 +17,16 @@ interface PIIMatch {
   suggestedReplacement: string;
 }
 
-interface ParseResponse {
-  source: { filename: string; byteLength: number; sha256: string };
-  parse: {
-    detectedFormat: string;
-    dateOrder: string;
-    participants: string[];
-    dateRange: { start: string; end: string } | null;
-    totalLines: number;
-    excludedCount: number;
-    counts: { system: number; media: number; deleted: number; content: number };
-    warnings: string[];
-    messages: Array<{ sender: string | null; timestamp: string | null; text: string; isSystem: boolean }>;
-  };
+interface LocalView {
+  filename: string;
+  byteLength: number;
+  sha256: string;
+  parse: LocalAnalysis['parse'];
   analysis: { items: EvidenceItem[]; summary: Record<string, unknown> & { categories: Record<string, number> } };
   timeline: Timeline;
   pii: { matches: PIIMatch[]; summary: { total: number; hasBlocking: boolean; highConfidence: number } };
   notes: string[];
+  local: true;
 }
 
 const DEMO_TEXT = `03/09/2026, 09:05 - Mail Overseer: Sub-division business Mela is on 10/09/2026 at the block office.
@@ -44,6 +38,8 @@ const DEMO_TEXT = `03/09/2026, 09:05 - Mail Overseer: Sub-division business Mela
 10/09/2026, 18:20 - Mail Overseer: How many RPLI did Sevveri close at the Mela? Send figure now.
 10/09/2026, 19:50 - Mail Overseer: You did well at the counter today, take rest, no problem.
 11/09/2026, 09:15 - Mail Overseer: Submit a written explanation for not achieving the full target.`;
+
+const MAX_LOCAL_BYTES = 5 * 1024 * 1024;
 
 function redact(text: string, matches: PIIMatch[], enabled: Set<number>): string {
   const spans = matches
@@ -62,33 +58,53 @@ function redact(text: string, matches: PIIMatch[], enabled: Set<number>): string
 
 export function ImportClient() {
   const [text, setText] = useState('');
+  const [filename, setFilename] = useState('pasted.txt');
   const [eventDate, setEventDate] = useState('2026-09-10');
   const [whStart, setWhStart] = useState('09:00');
   const [whEnd, setWhEnd] = useState('17:00');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<ParseResponse | null>(null);
+  const [data, setData] = useState<LocalView | null>(null);
   const [enabledPII, setEnabledPII] = useState<Set<number>>(new Set());
 
   async function analyse() {
     if (!text.trim() || loading) return;
+    const bytes = new TextEncoder().encode(text).length;
+    if (bytes > MAX_LOCAL_BYTES) {
+      setError(`Chat text too large (${bytes} bytes). Limit is ${MAX_LOCAL_BYTES} bytes.`);
+      return;
+    }
     setLoading(true);
     setError(null);
     setData(null);
     try {
-      const res = await fetch('/api/evidence/parse', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text,
-          eventDate,
-          workingHours: { start: whStart, end: whEnd },
-        }),
+      // LOCAL-FIRST: the deterministic pipeline runs in this browser tab.
+      // Raw evidence is never POSTed anywhere — no fetch, no network.
+      const result = await analyzeWhatsAppText(text, {
+        workingHours: { start: whStart, end: whEnd },
+        eventDate: eventDate || null,
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || `Failed (${res.status})`);
-      setData(json as ParseResponse);
-      setEnabledPII(new Set((json.pii.matches as PIIMatch[]).map((_: PIIMatch, i: number) => i)));
+      if (!result.local) throw new Error('Local analysis failed.');
+      const view: LocalView = {
+        filename,
+        byteLength: result.source.byteLength,
+        sha256: result.source.sha256,
+        parse: result.parse,
+        analysis: result.analysis as LocalView['analysis'],
+        timeline: result.timeline,
+        pii: {
+          matches: result.pii.matches as unknown as PIIMatch[],
+          summary: result.pii.summary as unknown as LocalView['pii']['summary'],
+        },
+        notes: [
+          'Processed locally on this device. Raw evidence is not sent to the AI provider.',
+          'Nothing was saved. Parsing, classification, PII detection and hashing ran deterministically in your browser.',
+          'Classifications are evidence categories, not legal findings.',
+        ],
+        local: true,
+      };
+      setData(view);
+      setEnabledPII(new Set(view.pii.matches.map((_, i) => i)));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong.');
     } finally {
@@ -97,7 +113,12 @@ export function ImportClient() {
   }
 
   async function onFile(file: File) {
+    if (file.size > MAX_LOCAL_BYTES) {
+      setError(`File too large (${file.size} bytes). Limit is ${MAX_LOCAL_BYTES} bytes.`);
+      return;
+    }
     const t = await file.text();
+    setFilename(file.name || 'upload.txt');
     setText(t);
   }
 
@@ -111,8 +132,9 @@ export function ImportClient() {
       <section className="card">
         <p className="label-strong">1 · Import</p>
         <p className="mt-1 text-[13px] text-muted">
-          Paste a WhatsApp chat export, or upload the <code>.txt</code>. It is analysed locally and{' '}
-          <strong>not saved</strong> and <strong>not sent to any AI provider</strong>.
+          Paste a WhatsApp chat export, or upload the <code>.txt</code>. It is analysed{' '}
+          <strong>locally on this device</strong> and <strong>not saved</strong> and{' '}
+          <strong>not sent to any AI provider or server</strong>.
         </p>
         <textarea
           className="field mt-3 min-h-[160px] resize-y font-mono text-[12px]"
@@ -130,7 +152,7 @@ export function ImportClient() {
               onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
             />
           </label>
-          <button type="button" className="btn" onClick={() => setText(DEMO_TEXT)}>
+          <button type="button" className="btn" onClick={() => { setText(DEMO_TEXT); setFilename('demo-mela-chat.txt'); }}>
             Load demo text
           </button>
           <div className="flex items-center gap-2 text-[13px]">
@@ -144,7 +166,7 @@ export function ImportClient() {
             <input aria-label="Working hours end" type="time" className="field w-auto" value={whEnd} onChange={(e) => setWhEnd(e.target.value)} />
           </div>
           <button type="button" className="btn btn-primary" onClick={analyse} disabled={loading || !text.trim()}>
-            {loading ? 'Analysing…' : 'Analyse'}
+            {loading ? 'Analysing…' : 'Analyse locally'}
           </button>
         </div>
         {error && (
@@ -156,13 +178,16 @@ export function ImportClient() {
 
       {data && (
         <>
+          <p className="rounded border border-line bg-accent-soft p-3 text-[12.5px]" data-testid="local-badge">
+            Processed locally on this device. Raw evidence is not sent to the AI provider.
+          </p>
           <section className="card">
             <p className="label-strong">2 · What was detected</p>
             <dl className="mt-3 grid gap-3 text-[13px] sm:grid-cols-2 lg:grid-cols-4">
               <Stat label="Messages" value={`${data.parse.counts.content} content`} sub={`${data.parse.counts.system} system · ${data.parse.counts.media} media · ${data.parse.counts.deleted} deleted`} />
               <Stat label="Date range" value={data.parse.dateRange ? `${data.parse.dateRange.start.slice(0, 10)} → ${data.parse.dateRange.end.slice(0, 10)}` : 'unknown'} sub={`format: ${data.parse.detectedFormat} · order: ${data.parse.dateOrder}`} />
               <Stat label="Participants" value={String(data.parse.participants.length)} sub={data.parse.participants.join(', ') || '—'} />
-              <Stat label="Integrity" value={`sha256 ${data.source.sha256.slice(0, 10)}…`} sub={`${data.source.byteLength} bytes · ${data.parse.excludedCount} lines excluded`} />
+              <Stat label="Integrity" value={`sha256 ${data.sha256.slice(0, 10)}…`} sub={`${data.byteLength} bytes · ${data.parse.excludedCount} lines excluded`} />
             </dl>
             {data.parse.warnings.length > 0 && (
               <div className="mt-3 rounded border border-line bg-accent-soft p-3 text-[12.5px]">

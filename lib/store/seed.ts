@@ -5,7 +5,7 @@
  */
 
 import { makeAuditEntry } from '@/lib/evidence/audit';
-import { sha256HexSync } from '@/lib/evidence/hash';
+import { sha256HexSync } from '@/lib/evidence/hash-sync';
 import { ingestWhatsApp } from '@/lib/evidence/ingest';
 import type { Case, EvidenceSource } from '@/lib/evidence/types';
 import { applyAliases, parseWhatsAppExport } from '@/lib/evidence/whatsapp';

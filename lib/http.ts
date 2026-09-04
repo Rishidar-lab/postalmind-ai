@@ -5,7 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { getConfig } from './config';
-import { sha256HexSync } from './evidence/hash';
+import { sha256HexSync } from './evidence/hash-sync';
 
 export interface ApiError {
   error: string;

@@ -1,15 +1,22 @@
 /**
- * Evidence integrity primitives.
+ * Evidence integrity primitives — ISOMORPHIC (browser + Node + Edge).
  *
- * Every imported original gets a SHA-256 over its exact bytes. The hash is
- * computed locally and never depends on an external service.
+ * Every imported original gets a SHA-256 over its exact bytes, computed on the
+ * device. This module has **no Node imports** so it is safe in a client bundle:
+ * it uses the Web Crypto API (`crypto.subtle`), which is available in every
+ * modern browser, in Node 20+, and on the Edge runtime.
  *
- * `sha256Hex` is isomorphic (prefers Web Crypto, falls back to Node). The
- * synchronous helper is Node-only and used by API routes (runtime = 'nodejs'),
- * the demo seed, and tests — no client module imports this file.
+ * The synchronous Node-only helper lives in `hash-sync.ts` (used by the demo
+ * seed and tests only — never by client code).
  */
 
-import { createHash } from 'node:crypto';
+function getSubtle(): SubtleCrypto {
+  const c = (globalThis as unknown as { crypto?: Crypto }).crypto;
+  if (!c?.subtle) {
+    throw new Error('Web Crypto (crypto.subtle) is not available in this environment.');
+  }
+  return c.subtle;
+}
 
 /** SHA-256 hex digest of a string (UTF-8) or bytes. */
 export async function sha256Hex(input: string | Uint8Array | ArrayBuffer): Promise<string> {
@@ -19,19 +26,13 @@ export async function sha256Hex(input: string | Uint8Array | ArrayBuffer): Promi
       : input instanceof ArrayBuffer
         ? new Uint8Array(input)
         : input;
-
-  const g = globalThis as unknown as { crypto?: Crypto };
-  if (g.crypto?.subtle) {
-    const digest = await g.crypto.subtle.digest('SHA-256', bytes as unknown as ArrayBuffer);
-    return bufToHex(new Uint8Array(digest));
-  }
-  return createHash('sha256').update(Buffer.from(bytes)).digest('hex');
+  const digest = await getSubtle().digest('SHA-256', bytes as unknown as ArrayBuffer);
+  return bufToHex(new Uint8Array(digest));
 }
 
-/** Synchronous SHA-256 (Node runtime only). */
-export function sha256HexSync(input: string | Uint8Array): string {
-  const bytes = typeof input === 'string' ? Buffer.from(input, 'utf8') : Buffer.from(input);
-  return createHash('sha256').update(bytes).digest('hex');
+/** SHA-256 hex digest of a Blob/File, streamed via arrayBuffer(). */
+export async function sha256HexOfBlob(blob: Blob): Promise<string> {
+  return sha256Hex(await blob.arrayBuffer());
 }
 
 function bufToHex(buf: Uint8Array): string {
