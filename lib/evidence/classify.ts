@@ -62,6 +62,11 @@ const TARGET: Entry[] = [
   ['mela', 1, ['TARGET_INSTRUCTION']],
   ['canvass', 1, ['TARGET_INSTRUCTION']],
   ['business', 1, ['TARGET_INSTRUCTION']],
+  // A bare work noun with a quantity ("5 accounts") reads as an output target,
+  // kept at weight 1 so it stays LOW confidence without corroboration.
+  ['accounts', 1, ['TARGET_INSTRUCTION']],
+  // A weekday deadline ("by Friday") states an expectation, not pressure.
+  [/\bby (monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/, 1, ['PERFORMANCE_EXPECTATION']],
 ];
 
 const PRESSURE: Entry[] = [
@@ -240,6 +245,9 @@ const ADMIN: Entry[] = [
   ['close the bo', 1, ['ADMINISTRATIVE_INSTRUCTION']],
   ['attend the meeting', 1, ['ADMINISTRATIVE_INSTRUCTION']],
   ['bring the documents', 1, ['ADMINISTRATIVE_INSTRUCTION']],
+  ['report tomorrow', 2, ['ADMINISTRATIVE_INSTRUCTION']],
+  ['report by', 2, ['ADMINISTRATIVE_INSTRUCTION']],
+  ['send a report', 1, ['ADMINISTRATIVE_INSTRUCTION']],
 ];
 
 const ALL_TABLES: Entry[] = [

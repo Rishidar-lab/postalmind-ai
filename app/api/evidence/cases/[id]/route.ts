@@ -7,15 +7,16 @@ import { jsonError, securityHeaders } from '@/lib/http';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const store = await getStore();
-  const caseRecord = await store.getCase(params.id);
+  const caseRecord = await store.getCase(id);
   if (!caseRecord) return jsonError('not_found', 'Case not found.', 404);
 
   const [sources, items, audit] = await Promise.all([
-    store.listSources(params.id),
-    store.listItems(params.id),
-    store.listAudit(params.id),
+    store.listSources(id),
+    store.listItems(id),
+    store.listAudit(id),
   ]);
 
   const timeline = buildTimeline(items, { centralEventDate: caseRecord.eventDate });

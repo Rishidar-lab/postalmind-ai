@@ -17,7 +17,7 @@ describe('detectPII', () => {
   });
 
   it('finds a post office facility ID', () => {
-    const m = detectPII('Sevveri BO29411310005 accounts pending');
+    const m = detectPII('Sevveri BO00000000000 accounts pending');
     expect(m.some((x) => x.type === 'FACILITY_ID')).toBe(true);
   });
 

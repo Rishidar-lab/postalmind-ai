@@ -7,21 +7,23 @@ import { EvidenceItemCard, PatternView, TimelineView } from '@/components/eviden
 
 export const dynamic = 'force-dynamic';
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
   const store = await getStore();
-  const c = await store.getCase(params.id);
+  const c = await store.getCase(id);
   return { title: c ? c.title : 'Case' };
 }
 
-export default async function CaseWorkspace({ params }: { params: { id: string } }) {
+export default async function CaseWorkspace({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const store = await getStore();
-  const caseRecord = await store.getCase(params.id);
+  const caseRecord = await store.getCase(id);
   if (!caseRecord) notFound();
 
   const [sources, items, audit] = await Promise.all([
-    store.listSources(params.id),
-    store.listItems(params.id),
-    store.listAudit(params.id),
+    store.listSources(id),
+    store.listItems(id),
+    store.listAudit(id),
   ]);
   const timeline = buildTimeline(items, { centralEventDate: caseRecord.eventDate });
   const strength = caseStrengthSummary(items);

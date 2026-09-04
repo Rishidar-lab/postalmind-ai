@@ -104,7 +104,7 @@ const RULES: Rule[] = [
   },
   {
     type: 'FACILITY_ID',
-    // BO/SO/HO/RMS facility IDs like BO29411310005, and "PIN 606106" office refs.
+    // BO/SO/HO/RMS facility IDs like BO00000000000, and "PIN 000000" office refs.
     re: /\b(?:BO|SO|HO|RMS|MDG|EDSO|EDBO)\s?\d{6,13}\b/gi,
     confidence: 'high',
     label: 'Post office facility ID',

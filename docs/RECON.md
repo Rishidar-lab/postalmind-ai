@@ -26,7 +26,7 @@ before it was written. Commands were run against a fresh `npm install`.
 - The homepage carries several **unsupported marketing claims** ("200+ AI
   Models", "1.5L+ GDS Officers" as a product stat, "instant, cited answers")
   and **exposes a real workplace identifier** (Branch Office Facility ID
-  `BO29411310005`) plus the builder's PIN-level location.
+  `BO29[REDACTED — removed from the app in the redesign]`) plus the builder's PIN-level location.
 
 ---
 
@@ -175,7 +175,7 @@ Essentially everything the brief specifies:
 
 | # | Issue |
 |---|---|
-| 6.1 | **Real workplace identifier committed to a public repo and rendered on the homepage:** `app/page.tsx` — "Sevveri Branch Office (BO Facility ID: BO29411310005), Vriddhachalam Sub-Division" + "PIN 606106". The brief explicitly says not to expose exact Branch Office Facility IDs. This is in git history too. |
+| 6.1 | **Real workplace identifier committed to a public repo and rendered on the homepage:** `app/page.tsx` — "Sevveri Branch Office (BO Facility ID: BO29[REDACTED]), Vriddhachalam Sub-Division" + "PIN [REDACTED]". The brief explicitly says not to expose exact Branch Office Facility IDs. This is in git history too. |
 | 6.2 | Builder is named in full with employer, university, and security-researcher handle. That is the builder's choice, but it should be a deliberate `/about`, not hero copy, and the BO ID must go. |
 | 6.3 | No framework exists for the sensitive data the platform is *designed* to ingest (WhatsApp threads with phone numbers, customer account numbers, colleague names). Nothing stops a future contributor committing a real export. `.gitignore` has no `/.data`, `/evidence`, `/uploads`, `*.txt` guard. |
 | 6.4 | Chat messages are sent to Google with no notice to the user about what leaves the device. No `/privacy`. |
