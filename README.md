@@ -1,109 +1,164 @@
 # PostalMind AI
 
-AI companion for India Post GDS Officers — instant answers on GDS CE Rules, RTI drafting, BO workflows, and financial services. Built for 1.5 lakh+ rural postal workers.
+**Ground reality. Verified.**
+Tools for GDS. Evidence for accountability.
 
-- **Live Demo:** [https://postalmind-ai.vercel.app](https://postalmind-ai.vercel.app)
-- **Hackathon:** Novita × Kilo Code Hackathon 2026
-- **Builder:** RISHIDAR D. — GDS ABPM, Sevveri BO, Tamil Nadu
+PostalMind AI is an independent, bilingual (Tamil / English) public-interest technology
+project providing **evidence-grounded knowledge**, **workplace-evidence analysis** and
+**practical tools** around the working reality of Gramin Dak Sevaks.
 
-## Features
+Built by a serving Gramin Dak Sevak from direct operational experience.
 
-- **GDS CE Rules 2020** — cited, instant answers on conduct, leave, engagement, and disciplinary rules
-- **RTI Drafting** — generate ready-to-file RTI applications with proper format
-- **BO Daily Workflow** — PMA targets, checklists, e-BO procedures
-- **Financial Services** — IPPB, PLI, RPLI, NSC, SSA, MIS guidance
-- **Circulars & Orders** — contextual DOPT and postal circular updates
-- **Tamil + English** — full bilingual support for Tier-2/3 postal workers
+> **Independent project. Not affiliated with or endorsed by India Post or the Department
+> of Posts.**
 
-## Tech Stack
+---
 
-| Layer | Technology |
-|-------|------------|
-| Frontend | React 18 + Next.js 14 (App Router) + Tailwind CSS |
-| Backend | Next.js API Routes (serverless) |
-| AI | Google Gemini 2.5 Flash (free tier) |
-| Deployment | Vercel |
-| Rate Limiting | In-memory token bucket per IP |
+## Why it exists
 
-## Local Development
+1. GDS employees struggle to find and understand rules, circulars, duties, service
+   conditions, targets, leave and TRCA instructions.
+2. General AI chatbots hallucinate rule numbers, circular numbers, rates and
+   administrative claims.
+3. Workplace pressure — target pressure, public comparison, after-hours instructions,
+   threat-like language — often arrives through WhatsApp or verbally, and individual
+   screenshots are hard to assess objectively.
+4. GDS employees need a **privacy-safe** way to preserve, organise, analyse and present
+   evidence **without** turning it into propaganda or unsupported accusation.
 
-### 1. Clone & Install
+So PostalMind is **evidence-first**. It is built to be able to tell you:
+*"This evidence does not prove your claim."*
 
-```bash
-git clone https://github.com/your-username/postalmind-ai.git
-cd postalmind-ai
-npm install
-```
+## What it does
 
-### 2. Get a Free Gemini API Key
+| Area | What you get |
+|---|---|
+| **Ask** (`/ask`) | Source-grounded answers on GDS rules, TRCA, leave, RTI, postal financial services. Every answer labelled **VERIFIED / INFERENCE / UNVERIFIED / UNKNOWN**, with citations. Declines rather than guesses. |
+| **Evidence** (`/evidence`) | Import a WhatsApp export → parse locally → classify each message into 18 evidence categories → rate evidence strength → build a PRE/EVENT/POST timeline → detect PII → preview redaction → run a 12-point publication safety check. Nothing is sent to an AI provider. |
+| **Know your status** (`/status`) | Short, source-linked takes on GDS status, engagement rules, TRCA and leave. |
+| **Ground Reality** (`/ground-reality`) | An evidence-led editorial series — every claim carrying its source, basis and qualification. |
+| **Tools** (`/tools`) | Deterministic RTI application drafter; incident timeline generator. |
+| **Sources** (`/sources`) | The document library PostalMind cites, with status and links. |
 
-1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
-2. Sign in with your Google account
-3. Click "Create API Key"
-4. Copy the key (looks like `AIza...`)
-5. No credit card required. Free tier: 15 requests/min, 1M tokens/min input, 4M tokens/day.
+### The current real-world case: `PM-GDS-MELA-2026-09-10`
 
-### 3. Configure API Key
+The evidence workflow is built around a real need — a business/Mela target-pressure
+situation. The repository ships a **fully synthetic** version of it (`PM-GDS-MELA-2026-09-10`)
+with no real names, numbers or offices, so the whole pipeline is demonstrable without
+exposing anyone. Real evidence is never committed.
 
-```bash
-cp .env.local.example .env.local
-# Edit .env.local and add your Gemini API key
-```
+## Evidence methodology (short version)
 
-### 4. Run Dev Server
+- **Answers** are retrieval-first. A language model, if configured, only ever sees the
+  retrieved source passages — never its own memory of "the rules". If nothing
+  authoritative is retrieved, the answer is `UNKNOWN`.
+- **Classification** is deterministic and rule-based (not an LLM) so it is explainable,
+  reproducible and conservative. A target instruction is a *target instruction*, not
+  "harassment". Every classification carries a mandatory **"what this does not establish"**.
+- **Evidence strength** is `INSUFFICIENT / WEAK / MODERATE / STRONG` with written factors.
+  There is **no numeric "harassment score"**. A single item is never `STRONG` without an
+  independent document.
+- **Publication** requires passing 12 checks (PII removal, context retention, source
+  citation, counter-evidence, no unsupported legal conclusions, defamation guard…). Any
+  BLOCK stops the export. There is no rage-bait tone mode.
 
-```bash
-npm run dev
-# Open http://localhost:3000
-```
-
-### 5. Build for Production
-
-```bash
-npm run build
-```
-
-## Deployment
-
-### Vercel (Recommended) — One-Click Deploy
-
-1. **Fork this repo to your GitHub** (or create a new repo and push the code)
-2. **Go to [Vercel](https://vercel.com/)** → Sign up with GitHub
-3. **Click "New Project"** → Import your GitHub repo
-4. **Add Environment Variable:**
-   - Name: `GEMINI_API_KEY`
-   - Value: Your Google Gemini API key (starts with `AIza...`)
-5. **Click Deploy** — Vercel builds and hosts automatically
-6. **Your app is live** at `https://your-project-name.vercel.app`
-
-### Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GEMINI_API_KEY` | Yes | Google Gemini API key (free tier) |
+Full detail: [`/methodology`](https://postalmind-ai.vercel.app/methodology) ·
+[`docs/EVIDENCE-MODEL.md`](docs/EVIDENCE-MODEL.md) ·
+[`docs/PUBLISHING-STANDARD.md`](docs/PUBLISHING-STANDARD.md)
 
 ## Architecture
 
 ```
-User (Browser) → Next.js API /api/chat → Google Gemini (Free Tier)
+Browser
+  ├─ /ask         → POST /api/ask   → retrieve(corpus) → [model constrained to passages] → classified answer
+  ├─ /evidence/*  → POST /api/evidence/parse            → parse + classify + PII + timeline  (LOCAL, not persisted, no AI)
+  │                  POST /api/evidence/publication-check → 12-point safety check             (LOCAL)
+  │                  GET  /api/evidence/cases[/:id]      → in-memory case store (demo-seeded)
+  └─ /api/health  → app / ai / db / storage status (no secrets)
+
+Next.js 14 (App Router) · TypeScript strict · Tailwind · Vitest
+AI provider: OpenRouter free-tier models (configurable) — optional; app runs in demo mode without it
+Persistence: in-memory demo store now; Postgres/Prisma is the documented production path
 ```
 
-- **Rate limiting:** 20 requests/minute per IP
-- **Input validation:** Max 4000 chars per message
-- **Streaming:** SSE-style response streaming for real-time typing feel
-- **Key security:** API key stored in Vercel env vars, never exposed to browser
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-## Troubleshooting
+## Privacy
 
-| Issue | Solution |
-|-------|----------|
-| "AI service not configured" | Set `GEMINI_API_KEY` in Vercel Environment Variables |
-| "Rate limit exceeded" | Wait 60 seconds, or reduce request frequency |
-| Tamil text not rendering | Ensure UTF-8 charset is set in your hosting |
-| Build fails on Vercel | Check Node.js version is 18+ in Vercel settings |
+- WhatsApp parsing, classification, PII detection, redaction, hashing and the publication
+  check all run **locally in your request**. Evidence text is **not** sent to any AI
+  provider.
+- Nothing becomes public automatically — a PUBLIC export is an explicit action gated by
+  the safety check.
+- The repository contains **only synthetic/demo data**.
 
-## License
+See [`PRIVACY.md`](PRIVACY.md) and [`/privacy`](https://postalmind-ai.vercel.app/privacy).
 
-MIT © 2026 RISHIDAR D.
+## Local setup
 
-Built at Sevveri BO, Vriddhachalam Sub-Division, Tamil Nadu 🇮🇳
+```bash
+git clone https://github.com/Rishidar-lab/postalmind-ai.git
+cd postalmind-ai
+npm install
+cp .env.local.example .env.local   # optional — app runs in demo mode without a key
+npm run dev                         # http://localhost:3000
+```
+
+### Verify
+
+```bash
+npm run lint        # eslint (next/core-web-vitals)
+npm run typecheck   # tsc --noEmit
+npm run test        # vitest — 80+ unit tests
+npm run build       # next build
+npm run verify      # all of the above
+```
+
+### Environment variables
+
+| Variable | Required | Default | Purpose |
+|---|---|---|---|
+| `OPENROUTER_API_KEY` | No | — | Enables model-composed answers via OpenRouter. Without it, the app runs in demo mode (extractive answers only). Never sent to the client. |
+| `OPENROUTER_MODEL` | No | `openrouter/free` | OpenRouter model id — change without a code deploy. Accepts explicit `provider/model:free` variants. |
+| `OPENROUTER_MODEL_PRIMARY` | No | — | Same meaning as `OPENROUTER_MODEL`; takes precedence if both are set. |
+| `OPENROUTER_MODEL_FALLBACK` | No | — | A second model the quality gate retries once if the primary model's response is rejected as unusable for grounded QA (see `lib/ask/answer.ts`). Unset = degrade straight to source-only. |
+| `OPENROUTER_SITE_URL` | No | — | Optional `HTTP-Referer` attribution header for OpenRouter. |
+| `OPENROUTER_APP_NAME` | No | `PostalMind AI` | Optional `X-Title` attribution header for OpenRouter. |
+| `OPENROUTER_BASE_URL` | No | OpenRouter endpoint | Override the API base URL (rarely needed). |
+| `APP_ENV` | No | inferred | `development` / `preview` / `production`. |
+| `DATABASE_URL` | No | — | Postgres connection string (future durable store). |
+| `MAX_UPLOAD_SIZE` | No | `5242880` | Max bytes for an evidence upload. |
+| `HASH_SALT` | No | dev salt | Salt for hashing client identifiers in logs. |
+| `NEXT_PUBLIC_SITE_URL` | No | vercel URL | Canonical site URL for metadata. |
+
+No secret is ever exposed to the client bundle.
+
+## Deployment
+
+Target: **Vercel** (Next.js App Router with API routes). GitHub Pages cannot host this
+app — the API routes need a server runtime.
+
+1. Import the repo in Vercel.
+2. Set `OPENROUTER_API_KEY` (and optionally `OPENROUTER_MODEL`) as environment variables. The
+   app deploys and serves `/ask` in source-only mode without it.
+3. Deploy. Check `/api/health` and `/api/health?probe=ai`.
+
+> **Note (Sept 2026):** the previously linked live URLs still served the pre-Next.js Vite
+> prototype. This build has not yet been deployed to production — see
+> [`docs/RECON.md`](docs/RECON.md) §1.
+
+## Project history
+
+PostalMind AI began as a submission to the Novita × Kilo Code Hackathon (July 2026). It is
+being rebuilt as a durable public-interest tool. The hackathon origin is recorded for
+transparency and confers no endorsement.
+
+## Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`SECURITY.md`](SECURITY.md). The most valuable
+contribution is **verified source passages** — see [`docs/SOURCE-POLICY.md`](docs/SOURCE-POLICY.md).
+
+## Licence
+
+MIT © 2026 PostalMind AI contributors. Evidence classifications on this site are evidence
+categories, not legal findings. Nothing here is legal advice.

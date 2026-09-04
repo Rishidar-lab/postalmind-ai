@@ -8,10 +8,12 @@ node_modules/
 out/
 dist/
 
-# Environment
+# Environment — never commit secrets
 .env
 .env.local
 .env.*.local
+.env*.local
+.env.production
 
 # IDE
 .vscode/
@@ -28,3 +30,30 @@ yarn-error.log*
 
 # Typescript
 *.tsbuildinfo
+
+# Evidence — NEVER commit real workplace evidence. Only synthetic/demo data
+# belongs in this repo (see CONTRIBUTING.md).
+# NOTE: directory patterns are root-anchored (leading /) so they NEVER match
+# source dirs like app/evidence/ or lib/evidence/.
+/.data/
+/data/
+/uploads/
+/evidence/
+/cases/
+/case-data/
+/private-evidence/
+/whatsapp-exports/
+*.chat.txt
+*.whatsapp.txt
+_chat.txt
+WhatsApp*.txt
+coverage/
+
+# Portable case backups — private by definition
+*.postalmind-case
+
+# Local vault exports / screenshots
+*.postalmind-case.json
+vault-export/
+real-screenshots/
+Private/
