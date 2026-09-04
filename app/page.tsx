@@ -10,18 +10,26 @@ export default function HomePage() {
         <p className="label-strong">PostalMind AI</p>
         <h1 className="mt-2 text-4xl sm:text-5xl">Ground reality. Verified.</h1>
         <p className="mt-4 text-lg text-muted">
-          AI-assisted knowledge, workplace-evidence analysis and practical tools built around the
-          working reality of Gramin Dak Sevaks. Every answer is tied to a source, or it says it
+          AI-powered knowledge, evidence analysis and practical tools built around the working
+          reality of Gramin Dak Sevaks. Every answer is tied to a source, or it says it
           doesn&rsquo;t know.
+        </p>
+        <p className="mt-2 text-[14px] font-medium text-ink">
+          Built from direct GDS operational experience.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link href="/ask" className="btn btn-primary">Ask PostalMind</Link>
-          <Link href="/evidence/import" className="btn">Analyse evidence</Link>
+          <Link href="/evidence/import" className="btn">Analyse Evidence</Link>
+          <Link href="/ground-reality" className="btn">Ground Reality</Link>
         </div>
         <p className="mt-4 text-[13px] text-faint">
           {cfg.demoMode
             ? 'Running in demo mode — no language model configured. The assistant shows retrieved sources rather than composing new claims.'
             : `Language model: ${cfg.ai.model}. Answers are still constrained to retrieved sources.`}
+        </p>
+        <p className="mt-2 text-[12.5px] text-faint">
+          Independent project. Not affiliated with or endorsed by India Post or the Department of
+          Posts.
         </p>
       </section>
 
