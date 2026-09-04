@@ -160,8 +160,20 @@ export function assessStrength(
     });
   }
 
-  const strength: EvidenceStrength =
+  let strength: EvidenceStrength =
     points >= 8 ? 'STRONG' : points >= 5 ? 'MODERATE' : points >= 2 ? 'WEAK' : 'INSUFFICIENT';
+
+  // A single item is never STRONG on message content alone. STRONG requires at
+  // least one independent documentary source (order, register, targets sheet,
+  // official alert) so the finding does not rest on one custodian's export.
+  if (strength === 'STRONG' && docs < 1) {
+    strength = 'MODERATE';
+    factors.push({
+      factor: 'Single-source cap',
+      effect: 'lowers',
+      note: 'Capped at MODERATE: no independent document corroborates this item, so it rests on one source.',
+    });
+  }
 
   const explanation = buildExplanation(strength, factors);
   return { strength, factors, explanation };
