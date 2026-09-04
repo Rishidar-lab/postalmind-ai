@@ -40,7 +40,7 @@ export default function PrivacyPage() {
           <tr><th>Action</th><th>What is sent</th><th>To whom</th></tr>
         </thead>
         <tbody>
-          <tr><td>Ask PostalMind (with a model configured)</td><td>Your question + the retrieved <em>source passages</em> (public documents). Not your evidence.</td><td>The configured model provider (e.g. Google Gemini)</td></tr>
+          <tr><td>Ask PostalMind (with a model configured)</td><td>Your question + the retrieved <em>source passages</em> (public documents). Not your evidence.</td><td>OpenRouter (free-tier model, provider-selected)</td></tr>
           <tr><td>Ask PostalMind (demo mode)</td><td>Nothing leaves — sources are shown directly.</td><td>—</td></tr>
           <tr><td>Analyse evidence / publication check</td><td>Nothing leaves the server request.</td><td>—</td></tr>
           <tr><td>Any page load</td><td>Standard web request. Fonts are loaded from Google Fonts.</td><td>Your host + Google Fonts</td></tr>

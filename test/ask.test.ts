@@ -27,7 +27,7 @@ describe('retrieve', () => {
 
 describe('ask (demo mode)', () => {
   beforeEach(() => {
-    delete process.env.GEMINI_API_KEY;
+    delete process.env.OPENROUTER_API_KEY;
     resetConfigCache();
     resetProviderCache();
   });

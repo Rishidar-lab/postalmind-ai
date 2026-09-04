@@ -122,13 +122,18 @@ export function AskClient() {
             <div className="flex flex-wrap items-center gap-2">
               <ClassificationChip value={result.classification} />
               <span className="text-[12px] text-faint">
-                {result.mode === 'model' ? `composed by ${result.model}` : result.mode === 'extractive' ? 'sources shown directly' : 'no answer'}
+                {result.mode === 'model'
+                  ? `Composed with: ${result.model} via OpenRouter`
+                  : result.mode === 'extractive'
+                    ? 'sources shown directly'
+                    : 'no answer'}
                 {' · '}
                 {result.retrieval.passageCount} passage{result.retrieval.passageCount === 1 ? '' : 's'} retrieved
               </span>
             </div>
             <p className="mt-3 whitespace-pre-wrap text-[15px] leading-relaxed">{result.answer}</p>
             <p className="mt-4 border-t border-line pt-3 text-[12.5px] text-muted">{result.notice}</p>
+            <p className="mt-1 text-[11.5px] text-faint">Sources determine verification status; the model does not.</p>
             {result.uncitedClaimWarnings.length > 0 && (
               <div className="mt-3 rounded border border-line bg-accent-soft p-3 text-[12.5px]">
                 <p className="font-semibold" style={{ color: 'var(--warn)' }}>

@@ -10,10 +10,15 @@
 export interface AppConfig {
   appEnv: 'development' | 'preview' | 'production';
   ai: {
+    /** 'openrouter' when a key is configured, otherwise the deterministic 'demo' provider. */
+    provider: 'openrouter' | 'demo';
     configured: boolean;
     model: string;
-    /** Base URL for the Gemini generativelanguage API. */
+    /** Base URL for the OpenRouter chat-completions API. */
     baseUrl: string;
+    /** Optional attribution headers OpenRouter uses for free-tier routing/analytics. */
+    siteUrl: string | null;
+    appName: string;
     requestTimeoutMs: number;
     maxRetries: number;
   };
@@ -49,7 +54,7 @@ let cached: AppConfig | null = null;
 export function getConfig(): AppConfig {
   if (cached) return cached;
 
-  const geminiKey = process.env.GEMINI_API_KEY?.trim() || '';
+  const openRouterKey = process.env.OPENROUTER_API_KEY?.trim() || '';
   const dbUrl = process.env.DATABASE_URL?.trim() || '';
 
   const appEnvRaw = (process.env.APP_ENV || process.env.VERCEL_ENV || process.env.NODE_ENV || 'development').toLowerCase();
@@ -59,12 +64,15 @@ export function getConfig(): AppConfig {
   cached = {
     appEnv,
     ai: {
-      configured: geminiKey.length > 0,
-      // Configurable; default kept current and overridable without a redeploy of code.
-      model: process.env.GEMINI_MODEL?.trim() || 'gemini-2.5-flash',
-      baseUrl:
-        process.env.GEMINI_BASE_URL?.trim() ||
-        'https://generativelanguage.googleapis.com/v1beta',
+      provider: openRouterKey.length > 0 ? 'openrouter' : 'demo',
+      configured: openRouterKey.length > 0,
+      // Deliberately NOT hard-coded to one free model: OpenRouter picks among
+      // currently-available free models for "openrouter/free", and an explicit
+      // "provider/model:free" variant can be set without a code change.
+      model: process.env.OPENROUTER_MODEL?.trim() || 'openrouter/free',
+      baseUrl: process.env.OPENROUTER_BASE_URL?.trim() || 'https://openrouter.ai/api/v1',
+      siteUrl: process.env.OPENROUTER_SITE_URL?.trim() || null,
+      appName: process.env.OPENROUTER_APP_NAME?.trim() || 'PostalMind AI',
       requestTimeoutMs: int('AI_REQUEST_TIMEOUT_MS', 30_000),
       maxRetries: int('AI_MAX_RETRIES', 1),
     },
@@ -83,7 +91,7 @@ export function getConfig(): AppConfig {
       maxRequestBytes: int('MAX_REQUEST_BYTES', 512 * 1024),
     },
     hashSalt: process.env.HASH_SALT?.trim() || 'postalmind-dev-salt',
-    demoMode: geminiKey.length === 0,
+    demoMode: openRouterKey.length === 0,
   };
   return cached;
 }

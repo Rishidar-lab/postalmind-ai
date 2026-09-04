@@ -10,9 +10,9 @@ you do not need to include a working exploit.
 ## Scope
 
 In scope: this repository's application code and its handling of user-supplied evidence,
-questions, and uploads. Out of scope: third-party providers (Google Gemini, Vercel),
-denial-of-service via volumetric traffic, and the content accuracy of source passages
-(that is an editorial matter — see `docs/SOURCE-POLICY.md`).
+questions, and uploads. Out of scope: third-party providers (OpenRouter and the free models
+routed through it, Vercel), denial-of-service via volumetric traffic, and the content accuracy
+of source passages (that is an editorial matter — see `docs/SOURCE-POLICY.md`).
 
 ## Threat model summary
 

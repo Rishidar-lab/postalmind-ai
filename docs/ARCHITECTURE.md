@@ -6,7 +6,9 @@
 - **Tailwind** with a tokenised palette (`app/globals.css`), light/dark via
   `prefers-color-scheme` + `[data-theme]`.
 - **Vitest** for unit tests (`test/**`), Node environment.
-- **AI provider**: Google Gemini via REST (no SDK). Optional — the app runs without it.
+- **AI provider**: OpenRouter (OpenAI-compatible chat-completions REST API, no SDK), free-tier
+  models by default. Optional — the app runs in source-only mode without it. A writing layer
+  only: it composes from retrieved passages, it never decides what is true.
 - **Persistence**: in-memory demo store today; Postgres/Prisma is the documented path.
 
 ## Directory map
@@ -34,7 +36,7 @@ lib/
   config.ts                env parsing, demo-mode detection
   http.ts                  bounded body reading, hashed client id, error helpers
   rate-limit.ts            in-process fixed-window limiter
-  ai/                      Provider interface, gemini.ts, demo.ts, index.ts
+  ai/                      Provider interface, openrouter.ts, demo.ts, index.ts
   ask/answer.ts            retrieve → constrain → classify → cite
   sources/                 types.ts, registry.ts (lexical retrieval)
   evidence/                types, whatsapp, hash, pii, redaction, classify,
@@ -61,8 +63,8 @@ question
   → retrieve(question)              lib/sources/registry.ts — lexical, transparent
   → 0 passages?  → UNKNOWN (no model call)
   → getProvider()
-       demo:   extractive answer from passages
-       gemini: generate() with system prompt = rules + passages only
+       demo:       extractive answer from passages
+       openrouter: generate() with system prompt = rules + passages only
   → findUncitedClaims(answer)       flag factual sentences with no [S#]
   → classify: VERIFIED | INFERENCE | UNVERIFIED | UNKNOWN
   → AskResult { classification, answer, citations, retrieval, notice, warnings }

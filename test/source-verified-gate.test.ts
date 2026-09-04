@@ -9,7 +9,7 @@ import { resetProviderCache } from '@/lib/ai';
  */
 describe('source trust: UNVERIFIED can never become VERIFIED', () => {
   beforeEach(() => {
-    delete process.env.GEMINI_API_KEY;
+    delete process.env.OPENROUTER_API_KEY;
     resetConfigCache();
     resetProviderCache();
   });

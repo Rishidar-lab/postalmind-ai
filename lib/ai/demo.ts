@@ -16,7 +16,7 @@ import { type GenerateOptions, type GenerateResult, type Provider } from './type
 const NOTE =
   'PostalMind is running in demo mode (no language model configured). ' +
   'It can only show you the source material it retrieved — it will not compose new claims about rules, ' +
-  'circulars or rates. Configure GEMINI_API_KEY to enable drafting and explanation.';
+  'circulars or rates. Configure OPENROUTER_API_KEY to enable drafting and explanation.';
 
 export function createDemoProvider(): Provider {
   const generate = async (opts: GenerateOptions): Promise<GenerateResult> => {

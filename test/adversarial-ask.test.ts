@@ -16,7 +16,7 @@ const ADVERSARIAL = [
 
 describe('adversarial ASK (must reject false premises, never fabricate)', () => {
   beforeEach(() => {
-    delete process.env.GEMINI_API_KEY;
+    delete process.env.OPENROUTER_API_KEY;
     resetConfigCache();
     resetProviderCache();
   });

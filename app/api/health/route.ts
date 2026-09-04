@@ -31,9 +31,10 @@ export async function GET(req: Request) {
       demoMode: cfg.demoMode,
     },
     ai: {
+      provider: cfg.ai.provider,
       configured: cfg.ai.configured,
-      provider: cfg.ai.configured ? 'gemini' : 'demo',
       model: cfg.ai.configured ? cfg.ai.model : 'demo-extractive',
+      mode: cfg.ai.configured ? 'model-assisted' : 'source-only',
       ...(aiProbe ? { probe: aiProbe } : {}),
     },
     database: {

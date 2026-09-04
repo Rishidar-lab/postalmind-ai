@@ -136,6 +136,24 @@ function findUncitedClaims(answer: string, refs: string[]): string[] {
   return out;
 }
 
+const REF_PATTERN = /\[S(\d+)\]/g;
+
+/**
+ * A model may cite a real ref and an invented one in the same sentence
+ * (`findUncitedClaims` only checks that *some* bracket is present), so this
+ * checks every `[Sn]` token in the full answer against the refs `ask()`
+ * actually retrieved. Anything else is a fabricated citation and must never
+ * be silently trusted.
+ */
+function findFabricatedRefs(answer: string, refs: string[]): string[] {
+  const found = new Set<string>();
+  for (const m of answer.matchAll(REF_PATTERN)) {
+    const ref = `S${m[1]}`;
+    if (!refs.includes(ref)) found.add(ref);
+  }
+  return [...found];
+}
+
 export interface AskOptions {
   history?: Array<{ role: 'user' | 'assistant'; content: string }>;
   signal?: AbortSignal;
@@ -197,6 +215,11 @@ export async function ask(question: string, opts: AskOptions = {}): Promise<AskR
     });
 
     const uncited = findUncitedClaims(result.text, refs);
+    const fabricatedRefs = findFabricatedRefs(result.text, refs);
+    const fabricationWarnings = fabricatedRefs.map(
+      (r) =>
+        `Cited [${r}], but no such source was retrieved for this question — treat that citation as unsupported.`,
+    );
     const refusal = /could not|cannot|do not (?:have|find)|not (?:enough|sufficient|covered)|no source/i.test(
       result.text.slice(0, 240),
     );
@@ -204,6 +227,10 @@ export async function ask(question: string, opts: AskOptions = {}): Promise<AskR
     let classification: AnswerClassification;
     if (refusal) {
       classification = 'UNKNOWN';
+    } else if (fabricatedRefs.length > 0) {
+      // A fabricated citation means the citation trail itself cannot be trusted —
+      // never let this reach VERIFIED or INFERENCE regardless of retrieval quality.
+      classification = 'UNVERIFIED';
     } else if (retrieval.anyDemo) {
       classification = 'UNVERIFIED';
     } else if (retrieval.allVerified && uncited.length === 0 && retrieval.level === 'strong') {
@@ -222,15 +249,18 @@ export async function ask(question: string, opts: AskOptions = {}): Promise<AskR
       mode: 'model',
       model: result.model,
       notice: NOTICE[classification],
-      uncitedClaimWarnings: uncited,
+      uncitedClaimWarnings: [...uncited, ...fabricationWarnings],
     };
   } catch (err) {
     if (err instanceof ProviderError) {
-      // Fall back to extractive rather than failing the whole request.
+      // Internal diagnostics only — kind, never the secret or raw provider body.
+      console.error(`[ask] provider unavailable (${err.kind}): ${err.message}`);
+      // Fall back to extractive rather than failing the whole request or
+      // surfacing a raw provider error kind to the user.
       return {
         classification: retrieval.anyDemo ? 'UNVERIFIED' : 'UNVERIFIED',
         answer:
-          `The language model is unavailable (${err.kind}). PostalMind is showing the retrieved sources directly:\n\n` +
+          'AI composition is temporarily unavailable. PostalMind is showing the retrieved source material directly.\n\n' +
           extractiveAnswer(q, citations, passages),
         citations,
         retrieval,

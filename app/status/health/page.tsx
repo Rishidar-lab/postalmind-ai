@@ -6,7 +6,7 @@ interface Health {
   status: string;
   time: string;
   app: { env: string; version: string; demoMode: boolean };
-  ai: { configured: boolean; provider: string; model: string; probe?: { ok: boolean; detail: string } };
+  ai: { configured: boolean; provider: string; model: string; mode: string; probe?: { ok: boolean; detail: string } };
   database: { configured: boolean; driver: string };
   storage: { configured: boolean; driver: string; durable: boolean };
   sources: { count: number; corpusPassages: number };
@@ -47,7 +47,7 @@ export default function HealthPage() {
               <Row k="Status" v={health.status} />
               <Row k="Environment" v={`${health.app.env} · v${health.app.version}`} />
               <Row k="Mode" v={health.app.demoMode ? 'demo (no language model)' : 'model configured'} />
-              <Row k="AI provider" v={`${health.ai.provider} · ${health.ai.model} · ${health.ai.configured ? 'configured' : 'not configured'}`} />
+              <Row k="AI provider" v={`${health.ai.provider} · ${health.ai.model} · ${health.ai.mode}`} />
               {health.ai.probe && <Row k="AI probe" v={`${health.ai.probe.ok ? 'ok' : 'FAIL'} — ${health.ai.probe.detail}`} />}
               <Row k="Database" v={health.database.configured ? health.database.driver : 'not configured'} />
               <Row k="Storage" v={`${health.storage.driver} · ${health.storage.durable ? 'durable' : 'NOT durable'}`} />

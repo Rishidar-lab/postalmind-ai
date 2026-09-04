@@ -77,7 +77,7 @@ Browser
   └─ /api/health  → app / ai / db / storage status (no secrets)
 
 Next.js 14 (App Router) · TypeScript strict · Tailwind · Vitest
-AI provider: Google Gemini (configurable model) — optional; app runs in demo mode without it
+AI provider: OpenRouter free-tier models (configurable) — optional; app runs in demo mode without it
 Persistence: in-memory demo store now; Postgres/Prisma is the documented production path
 ```
 
@@ -118,9 +118,11 @@ npm run verify      # all of the above
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
-| `GEMINI_API_KEY` | No | — | Enables model-composed answers. Without it, the app runs in demo mode (extractive answers only). |
-| `GEMINI_MODEL` | No | `gemini-2.5-flash` | Gemini model id — change without a code deploy. |
-| `GEMINI_BASE_URL` | No | Google endpoint | Override the API base URL. |
+| `OPENROUTER_API_KEY` | No | — | Enables model-composed answers via OpenRouter. Without it, the app runs in demo mode (extractive answers only). Never sent to the client. |
+| `OPENROUTER_MODEL` | No | `openrouter/free` | OpenRouter model id — change without a code deploy. Accepts explicit `provider/model:free` variants. |
+| `OPENROUTER_SITE_URL` | No | — | Optional `HTTP-Referer` attribution header for OpenRouter. |
+| `OPENROUTER_APP_NAME` | No | `PostalMind AI` | Optional `X-Title` attribution header for OpenRouter. |
+| `OPENROUTER_BASE_URL` | No | OpenRouter endpoint | Override the API base URL (rarely needed). |
 | `APP_ENV` | No | inferred | `development` / `preview` / `production`. |
 | `DATABASE_URL` | No | — | Postgres connection string (future durable store). |
 | `MAX_UPLOAD_SIZE` | No | `5242880` | Max bytes for an evidence upload. |
@@ -135,7 +137,8 @@ Target: **Vercel** (Next.js App Router with API routes). GitHub Pages cannot hos
 app — the API routes need a server runtime.
 
 1. Import the repo in Vercel.
-2. Set `GEMINI_API_KEY` (and optionally `GEMINI_MODEL`) as environment variables.
+2. Set `OPENROUTER_API_KEY` (and optionally `OPENROUTER_MODEL`) as environment variables. The
+   app deploys and serves `/ask` in source-only mode without it.
 3. Deploy. Check `/api/health` and `/api/health?probe=ai`.
 
 > **Note (Sept 2026):** the previously linked live URLs still served the pre-Next.js Vite

@@ -16,6 +16,7 @@ export type ProviderErrorKind =
   | 'timeout'
   | 'rate_limited'
   | 'auth'
+  | 'payment_required'
   | 'bad_request'
   | 'upstream'
   | 'network'

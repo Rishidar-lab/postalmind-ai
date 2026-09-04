@@ -27,7 +27,7 @@ The **text of your evidence is not sent to any AI provider.** The "Analyse evide
 
 | Action | What is sent | To whom |
 |---|---|---|
-| Ask (model configured) | Your question + retrieved **source passages** (public documents). Not your evidence. | The configured model provider (e.g. Google Gemini) |
+| Ask (model configured) | Your question + retrieved **source passages** (public documents). Not your evidence. | OpenRouter (free-tier model, provider-selected) |
 | Ask (demo mode) | Nothing — sources shown directly | — |
 | Analyse evidence / publication check | Nothing leaves the server request | — |
 | Page loads | Standard web request; fonts from Google Fonts | Your host + Google Fonts |
