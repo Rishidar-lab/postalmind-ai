@@ -15,11 +15,11 @@ export const DEMO_WHATSAPP_EXPORT = `03/09/2026, 09:02 - Messages and calls are 
 03/09/2026, 09:05 - Mail Overseer: Good morning all. Sub-division business Mela is on 10/09/2026 at the block office.
 03/09/2026, 09:06 - Mail Overseer: Each BO must bring RPLI proposals. This BO target is 8 proposals for the Mela.
 03/09/2026, 09:12 - ABPM Sevveri: Noted sir. I will start canvassing today.
-04/09/2026, 18:40 - Mail Overseer: RPLI progress? Only 1 proposal entered from your BO. Others have done 4-5 already.
-04/09/2026, 18:41 - ABPM Sevveri: Sir today I was on delivery beat till 6, could meet only 2 customers
+04/09/2026, 15:10 - Mail Overseer: RPLI progress? Only 1 proposal entered from your BO. Others have done 4-5 already.
+04/09/2026, 15:22 - ABPM Sevveri: Sir today I was on delivery beat till 2, could meet only 2 customers
 04/09/2026, 21:15 - Mail Overseer: This is not acceptable. Complete at least 3 more by tomorrow without fail.
-05/09/2026, 08:55 - Mail Overseer: <Media omitted>
-05/09/2026, 08:56 - Mail Overseer: See this ranking sheet. Sevveri BO is at the bottom. Only you are pulling the section down.
+05/09/2026, 10:40 - Mail Overseer: <Media omitted>
+05/09/2026, 10:41 - Mail Overseer: See this ranking sheet. Sevveri BO is at the bottom. Only you are pulling the section down.
 05/09/2026, 13:20 - ABPM Sevveri: Sir I am trying. Many customers want to think about it.
 06/09/2026, 19:30 - Mail Overseer: எத்தனை முறை சொல்வது? இலக்கு உடனே முடிக்கணும். இல்லைனா explanation கேட்பேன்.
 07/09/2026, 10:10 - Mail Overseer: Inspection by ASP may also happen around Mela day, keep BO records ready.

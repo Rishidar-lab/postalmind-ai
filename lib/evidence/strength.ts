@@ -8,11 +8,12 @@
  * and are never shown as a metric.
  */
 
-import type {
-  EvidenceAnalysis,
-  EvidenceItem,
-  EvidenceStrength,
-  SpeakerRole,
+import {
+  CATEGORY_META,
+  type EvidenceAnalysis,
+  type EvidenceItem,
+  type EvidenceStrength,
+  type SpeakerRole,
 } from './types';
 
 export interface StrengthContext {
@@ -162,6 +163,21 @@ export function assessStrength(
 
   let strength: EvidenceStrength =
     points >= 8 ? 'STRONG' : points >= 5 ? 'MODERATE' : points >= 2 ? 'WEAK' : 'INSUFFICIENT';
+
+  // If every substantive category is "neutral by default" (an ordinary target
+  // instruction, performance expectation, after-hours message or inspection
+  // reference), the item is well-attested context but not, on its own, evidence
+  // of pressure — cap it at WEAK regardless of corroboration.
+  const allNeutralByDefault =
+    substantive.length > 0 && substantive.every((c) => CATEGORY_META[c]?.neutralByDefault);
+  if (allNeutralByDefault && (strength === 'MODERATE' || strength === 'STRONG')) {
+    strength = 'WEAK';
+    factors.push({
+      factor: 'Ordinary-communication cap',
+      effect: 'lowers',
+      note: 'Capped at WEAK: every category here is a normal management communication, not a pressure indicator on its own.',
+    });
+  }
 
   // A single item is never STRONG on message content alone. STRONG requires at
   // least one independent documentary source (order, register, targets sheet,

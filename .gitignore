@@ -28,3 +28,16 @@ yarn-error.log*
 
 # Typescript
 *.tsbuildinfo
+
+# Evidence — NEVER commit real workplace evidence. Only synthetic/demo data
+# belongs in this repo (see CONTRIBUTING.md).
+.data/
+data/
+uploads/
+evidence/
+cases/
+*.chat.txt
+*.whatsapp.txt
+_chat.txt
+WhatsApp*.txt
+coverage/
