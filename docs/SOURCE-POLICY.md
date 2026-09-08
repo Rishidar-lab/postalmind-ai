@@ -33,8 +33,17 @@ GAZETTE_NOTIFICATION | GUIDANCE_NOTE`
 | `UNVERIFIED` | Project summary — accurate in intent, not yet checked line-by-line. | `UNVERIFIED` |
 | `DEMO` | Illustrative only. | `UNVERIFIED` |
 
-The shipped library is deliberately small and almost entirely `UNVERIFIED`. That is
-honest, not a placeholder to paper over.
+The shipped library is deliberately small. Five sources are `VERIFIED` against
+mirrored primary PDFs (GDS Rules 2020, RTI Act 2005, Small Savings Q2 FY2026-27,
+TRCA Order 2018, GDS Leave instructions); the Kamlesh Chandra Committee report
+stays `UNVERIFIED` because its full text was never retrieved from an official
+host — only its implementing orders were. That is honest, not a placeholder to
+paper over.
+
+Primary-document mirrors live in `.data/sources/original/` (gitignored) with a
+`<file>.fetch.json` sidecar recording URL, HTTP status, bytes, SHA-256 and
+retrieval method. Fetch them with `npm run sources:fetch -- --url <url>
+--out <path>` (browser-first; refuses HTML masquerading as PDF).
 
 ## Source categories to build out
 

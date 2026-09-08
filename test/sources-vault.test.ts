@@ -48,18 +48,31 @@ describe('ingestion: passages start UNVERIFIED', () => {
   });
 });
 
-// ─── 4. Unverified primary source cannot produce VERIFIED answer ───
+// ─── 4. Only genuinely verified sources produce VERIFIED answers ───
 describe('ASK: unverified source cannot produce VERIFIED', () => {
   const q = 'What is the disciplinary framework under the GDS Conduct and Engagement Rules 2020?';
-  it('no VERIFIED answer from UNVERIFIED corpus', () => {
+  it('mixed retrieval (verified + unverified) stays UNVERIFIED', () => {
     const passages = retrieve(q, { limit: 4 });
     const retrieval = assessRetrieval(passages);
-    // All current sources are UNVERIFIED, so retrieval.allVerified must be false
+    // This query also matches the still-UNVERIFIED Kamlesh Chandra passage,
+    // so retrieval.allVerified must be false even though GDS passages verify.
+    expect(passages.some((p) => p.status === 'UNVERIFIED')).toBe(true);
     expect(retrieval.allVerified).toBe(false);
   });
 
-  it('verified-only retrieval returns empty for unverified corpus', () => {
+  it('verified-only retrieval returns only genuinely verified passages', () => {
     const passages = retrieveVerified(q, { limit: 4 });
+    expect(passages.length).toBeGreaterThan(0);
+    for (const p of passages) {
+      expect(p.status).toBe('VERIFIED');
+      expect(p.source.status).toBe('VERIFIED');
+      expect(p.source.sha256).toBeTruthy();
+      expect(p.source.localPath).toBeTruthy();
+    }
+  });
+
+  it('verified-only retrieval returns empty where nothing is verified', () => {
+    const passages = retrieveVerified('business targets incentive', { limit: 4 });
     expect(passages.length).toBe(0);
   });
 });
