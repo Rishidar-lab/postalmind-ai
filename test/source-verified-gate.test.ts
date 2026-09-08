@@ -25,14 +25,13 @@ describe('source trust: UNVERIFIED can never become VERIFIED', () => {
     resetProviderCache();
   });
 
-  // Questions whose retrieval touches the still-UNVERIFIED Kamlesh Chandra
-  // passages must never classify VERIFIED.
+  // Questions whose answers genuinely lean on the still-UNVERIFIED Kamlesh
+  // Chandra passages must never classify VERIFIED: the committee-norms
+  // framing and business/targets coverage have no verified source yet.
   const NEVER_VERIFIED = [
-    'What is the TRCA revision of 2018?',
     'What are the working hours norms for GDS?',
-    'What leave are GDS entitled to?',
-    'What is the disciplinary framework under the GDS Conduct and Engagement Rules 2020?',
     'Are business targets part of GDS work?',
+    'Explain the committee norms for GDS working hours',
   ];
 
   // Questions whose retrieval is fully covered by genuinely verified
@@ -40,6 +39,11 @@ describe('source trust: UNVERIFIED can never become VERIFIED', () => {
   const GENUINELY_VERIFIED = [
     'How many days does the PIO have to reply to an RTI application?',
     'What is the current RD interest rate?',
+    'What is the TRCA revision of 2018?',
+    'What leave are GDS entitled to?',
+    'What is the disciplinary framework under the GDS Conduct and Engagement Rules 2020?',
+    'What are the daily working hours for a GDS?',
+    'Are GDS regular Central Government employees?',
   ];
 
   for (const q of NEVER_VERIFIED) {

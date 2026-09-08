@@ -48,8 +48,8 @@ export function tokenize(s: string): string[] {
   return (s.toLowerCase().match(/[a-z0-9]+/g) ?? []).filter((t) => t.length > 1 && !STOPWORDS.has(t));
 }
 
-/** Light stemming for a few common English suffixes. */
-function stem(t: string): string {
+/** Light stemming for a few common English suffixes. Exported for the deterministic answer synthesiser. */
+export function stem(t: string): string {
   return t.replace(/(ing|ers|er|ed|es|s)$/i, (m) => (t.length - m.length >= 3 ? '' : m));
 }
 

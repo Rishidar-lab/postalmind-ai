@@ -50,9 +50,9 @@ describe('ask() with OpenRouter configured', () => {
   });
 
   it('sends OpenRouter only the question + retrieved source passages — no evidence/vault payload', async () => {
-    let sentBody: { messages?: Array<{ role: string; content: string }> } = {};
+    const calls: Array<{ messages?: Array<{ role: string; content: string }> }> = [];
     global.fetch = (async (_url: string, init?: RequestInit) => {
-      sentBody = JSON.parse(String(init?.body));
+      calls.push(JSON.parse(String(init?.body)));
       return new Response(
         JSON.stringify({ model: 'x', choices: [{ message: { content: 'TRCA info [S1].' }, finish_reason: 'stop' }] }),
         { status: 200 },
@@ -61,11 +61,17 @@ describe('ask() with OpenRouter configured', () => {
     const { ask } = await import('@/lib/ask/answer');
     await ask(TRCA_QUESTION);
 
-    expect(sentBody.messages).toBeDefined();
-    expect(sentBody.messages!.some((m) => m.role === 'system')).toBe(true);
-    expect(sentBody.messages!.some((m) => m.role === 'user' && m.content === TRCA_QUESTION)).toBe(true);
-    const blob = JSON.stringify(sentBody);
-    expect(blob).not.toMatch(/whatsapp|EvidenceItem|vault|redactionMap|caseVault|Aadhaar/i);
+    // First call is the composer: system + the verbatim user question.
+    const composer = calls[0];
+    expect(composer.messages).toBeDefined();
+    expect(composer.messages!.some((m) => m.role === 'system')).toBe(true);
+    expect(composer.messages!.some((m) => m.role === 'user' && m.content === TRCA_QUESTION)).toBe(true);
+    // No call in the pipeline (composer, correction, advisory verifier) may
+    // carry private evidence/vault material — only the question + passages.
+    for (const c of calls) {
+      const blob = JSON.stringify(c);
+      expect(blob).not.toMatch(/whatsapp|EvidenceItem|vault|redactionMap|caseVault|Aadhaar/i);
+    }
   });
 
   it('a caller cannot smuggle private evidence text past the ask() boundary into the OpenRouter request', async () => {
@@ -210,7 +216,10 @@ describe('ask() with OpenRouter configured', () => {
       }) as typeof fetch;
       const { ask } = await import('@/lib/ask/answer');
       const r = await ask(TRCA_QUESTION);
-      expect(call).toBe(2);
+      // 1 composer + 1 fallback retry + 1 advisory verifier call. The
+      // retry-once property holds (calls 1–2); call 3 is the downgrade-only
+      // verifier, which abstains here because the mock is not JSON.
+      expect(call).toBe(3);
       expect(r.mode).toBe('model');
       expect(r.model).toBe('good-provider/good-model:free');
       expect(r.answer).toContain('[S1]');

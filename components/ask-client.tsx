@@ -6,23 +6,37 @@ import { ClassificationChip, SourceStatusChip } from './chips';
 interface Citation {
   ref: string;
   sourceId: string;
+  passageId?: string;
   title: string;
   authority: string;
   date: string | null;
   url: string | null;
+  canonicalUrl?: string | null;
+  documentNumber?: string | null;
   section: string | null;
   page: number | null;
   status: 'VERIFIED' | 'UNVERIFIED' | 'DEMO';
+  verifiedAt?: string | null;
+  sha256?: string | null;
   score: number;
+}
+interface AnswerClaim {
+  id: string;
+  text: string;
+  citationRefs: string[];
+  support: 'DIRECT' | 'INFERENCE' | 'UNSUPPORTED';
 }
 interface AskResult {
   classification: 'VERIFIED' | 'INFERENCE' | 'UNVERIFIED' | 'UNKNOWN';
   answer: string;
+  directAnswer?: string;
+  claims?: AnswerClaim[];
+  qualifications?: string[];
   citations: Citation[];
   notice: string;
   mode: string;
   model: string | null;
-  retrieval: { level: string; passageCount: number };
+  retrieval: { level: string; passageCount: number; topScore?: number };
   uncitedClaimWarnings: string[];
   rationale: string;
   limits: string[];
@@ -124,13 +138,7 @@ export function AskClient() {
             <div className="flex flex-wrap items-center gap-2">
               <ClassificationChip value={result.classification} />
               <span className="text-[12px] text-faint">
-                {result.mode === 'model'
-                  ? `Composed with: ${result.model} via OpenRouter`
-                  : result.mode === 'extractive'
-                    ? 'sources shown directly'
-                    : 'no answer'}
-                {' · '}
-                {result.retrieval.passageCount} passage{result.retrieval.passageCount === 1 ? '' : 's'} retrieved
+                {result.mode === 'model' ? 'Composed answer' : result.mode === 'extractive' ? 'Source-only answer' : 'No answer'}
               </span>
             </div>
             <p className="mt-3 whitespace-pre-wrap text-[15px] leading-relaxed">{result.answer}</p>
@@ -155,10 +163,30 @@ export function AskClient() {
               </div>
             </details>
 
-            {result.uncitedClaimWarnings.length > 0 && (
+            <details className="mt-2 text-[12px]">
+              <summary className="cursor-pointer select-none text-faint">Technical details</summary>
+              <div className="mt-2 space-y-1 border-t border-line pt-2 text-faint">
+                <p>
+                  Retrieval: {result.retrieval.passageCount} passage{result.retrieval.passageCount === 1 ? '' : 's'} ({result.retrieval.level} match)
+                  {result.mode === 'model' && result.model ? ` · composed with ${result.model} via OpenRouter` : ''}
+                  {result.mode === 'extractive' ? ' · deterministic source-only synthesis' : ''}
+                </p>
+                {result.citations.some((c) => c.sha256) && (
+                  <p className="break-all">
+                    Primary-document fingerprints:{' '}
+                    {result.citations
+                      .filter((c) => c.sha256)
+                      .map((c) => `${c.ref} ${c.sha256!.slice(0, 16)}…`)
+                      .join(' · ')}
+                  </p>
+                )}
+              </div>
+            </details>
+
+            {result.classification !== 'VERIFIED' && result.uncitedClaimWarnings.length > 0 && (
               <div className="mt-3 rounded border border-line bg-accent-soft p-3 text-[12.5px]">
                 <p className="font-semibold" style={{ color: 'var(--warn)' }}>
-                  Sentences without a source citation — treat with caution:
+                  Sentences removed or flagged before display — treat with caution:
                 </p>
                 <ul className="mt-1 list-disc pl-5">
                   {result.uncitedClaimWarnings.map((w, i) => (
@@ -178,18 +206,19 @@ export function AskClient() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="badge">{c.ref}</span>
                       <SourceStatusChip value={c.status} />
-                      <span className="text-faint">relevance {Math.round(c.score * 100)}%</span>
                     </div>
                     <p className="mt-1 font-medium">{c.title}</p>
                     <p className="text-muted">
                       {c.authority}
+                      {c.documentNumber ? ` · ${c.documentNumber}` : ''}
                       {c.date ? ` · ${c.date}` : ''}
                       {c.section ? ` · ${c.section}` : ''}
                       {c.page ? ` · p.${c.page}` : ''}
+                      {c.status === 'VERIFIED' && c.verifiedAt ? ` · checked ${c.verifiedAt.slice(0, 10)}` : ''}
                     </p>
-                    {c.url && (
+                    {(c.canonicalUrl ?? c.url) && (
                       <a
-                        href={c.url}
+                        href={(c.canonicalUrl ?? c.url) as string}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-accent underline underline-offset-2"
