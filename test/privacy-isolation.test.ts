@@ -79,7 +79,7 @@ describe('private-evidence isolation from the model', () => {
     expect(ui).not.toMatch(/fetch\(\s*['"`]\/api\/ask/);
     expect(ui).toMatch(/analyzeWhatsAppText/);
     // The local-only badge is shown only after a proven-local run.
-    expect(ui).toMatch(/Processed locally on this device/);
+    expect(ui).toMatch(/Processed locally in this browser tab/);
   });
 
   it('local analysis is deterministic and network-free', async () => {

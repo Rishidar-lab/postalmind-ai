@@ -14,10 +14,10 @@ export default function ImportPage() {
         <p className="label-strong">Evidence · Import</p>
         <h1 className="mt-2 text-3xl">Analyse a WhatsApp export</h1>
         <p className="mt-3 text-muted">
-          This runs entirely in your request. The chat text is <strong>not stored</strong> and{' '}
-          <strong>not sent to any AI provider</strong>. Parsing, classification, PII detection and
-          hashing all happen locally. Classifications are evidence categories — not findings of
-          misconduct.
+          This runs entirely in your browser. The chat text is <strong>not stored</strong> and{' '}
+           <strong>not sent to any AI provider</strong>. Parsing, classification, PII detection and
+           hashing all happen locally in your browser. Classifications are evidence categories — not findings of
+           misconduct.
         </p>
       </header>
       <ImportClient />

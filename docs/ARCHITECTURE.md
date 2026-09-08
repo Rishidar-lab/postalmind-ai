@@ -23,7 +23,7 @@ app/
   evidence/                dashboard, import, cases, cases/[id], timeline, patterns (+ observed patterns)
   changes/                 Rule Change Tracker — deterministic old/new text diff + verified-changes log
   corrections/             corrections ledger (severity: typo/clarification/factual/source-upgrade/retraction)
-  status/, status/health/  GDS status explorer + live health readout
+  status/, status/health/  GDS status explorer + health readout
   ground-reality/          claim-card-based evidence series (individually linkable)
   tools/, tools/rti/, tools/workday/, …  deterministic + local-only tools
   sources/, methodology/, privacy/, disclaimer/

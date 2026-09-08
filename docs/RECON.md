@@ -1,11 +1,13 @@
-# PostalMind AI — Phase 0 Recon
+# PostalMind AI — Phase 0 Recon (HISTORICAL)
 
 **Date:** 2026-09-04
-**Repo:** `Rishidar-lab/postalmind-ai` @ `main` (`210fdf5`)
+**Repo:** `Rishidar-lab/postalmind-ai` @ `main` (`210fdf5` at time of writing)
 **Reviewer:** takeover engineer (evidence-platform rebuild)
 
-This document is the pre-change baseline. Nothing in the application was modified
-before it was written. Commands were run against a fresh `npm install`.
+> **HISTORICAL NOTE:** This document was written before PR #1 merged
+> (commit `0dd998a`). It describes the pre-merge state. The current
+> codebase has a full evidence platform — see `docs/ARCHITECTURE.md`
+> for the current architecture.
 
 ---
 
@@ -202,14 +204,14 @@ Essentially everything the brief specifies:
 
 ## 9. Deployment issues
 
-| # | Issue |
-|---|---|
-| 9.1 | **Two conflicting deploy targets.** GitHub Pages (static-only; cannot run `/api/chat`) is *enabled* and serving old code. Vercel is referenced in README but the linked project serves old code too and no `.vercel` link exists in the repo. There is no single source of truth for "where does this run". |
-| 9.2 | No CI. Nothing runs `build` / `lint` / `test` on push. The four "fix: …" deploy commits show this was debugged by pushing to prod. |
-| 9.3 | `vercel.json` was added then removed; deployment config is now implicit. |
-| 9.4 | No `NEXT_PUBLIC_*` / runtime env documentation beyond `GEMINI_API_KEY`. |
-| 9.5 | `README` "Live Demo" link is wrong/misleading (points at a build that doesn't include the current app and doesn't work). |
-| 9.6 | Node version not pinned (`.nvmrc` / `engines` absent). |
+| # | Issue | Status |
+|---|---|---|
+| 9.1 | **Two conflicting deploy targets.** GitHub Pages (static-only; cannot run `/api/chat`) is *enabled* and serving old code. Vercel is referenced in README but the linked project serves old code too and no `.vercel` link exists in the repo. There is no single source of truth for "where does this run". | **Partially resolved** — PR #1 merged to main with Next.js fullstack. Two Vercel projects remain: `postalmind-ai` (canonical) and `postalmind-ai_drci` (duplicate). Both have production deployments for the current commit. |
+| 9.2 | No CI. Nothing runs `build` / `lint` / `test` on push. The four "fix: …" deploy commits show this was debugged by pushing to prod. | **Resolved** — `.github/workflows/ci.yml` added by PR #1 |
+| 9.3 | `vercel.json` was added then removed; deployment config is now implicit. | **Resolved** — no `vercel.json`; Next.js defaults used |
+| 9.4 | No `NEXT_PUBLIC_*` / runtime env documentation beyond `GEMINI_API_KEY`. | **Resolved** — `.env.local.example` updated by PR #1 |
+| 9.5 | `README` "Live Demo" link is wrong/misleading (points at a build that doesn't include the current app and doesn't work). | **Partially resolved** — README updated, but Vercel deployment is behind deployment protection checkpoint |
+| 9.6 | Node version not pinned (`.nvmrc` / `engines` absent). | **Unresolved** — no `.nvmrc` or `engines` field |
 
 ## 10. API-provider issues
 
@@ -265,13 +267,18 @@ Essentially everything the brief specifies:
 5. Decide and document a single deploy target; add CI that runs lint+typecheck+test+build.
 6. Expand remaining routes (pattern dashboard, ground reality, known-case module, content generator).
 
-### Known blockers requiring the maintainer
+### Current status (2026-09-08)
 
-- **No `GEMINI_API_KEY`** available in this environment → live AI cannot be
-  tested here. Demo mode will be built so the app is fully exercisable offline;
-  live path will be code-reviewed and health-checked but not run.
-- **No database credentials / Vercel access** → persistence ships as an
-  in-memory demo store (explicitly non-durable) plus a documented Postgres
-  target. Real deploy + env config is a maintainer action.
-- The stale live deployments need the maintainer to either repoint Vercel at
-  this branch after merge or hand over deploy access.
+PR #1 is merged. The codebase now includes:
+- Source-grounded ASK pipeline (`lib/ask/answer.ts`)
+- Evidence engine (`lib/evidence/*`)
+- Local-first IndexedDB vault (`lib/storage/*`)
+- OpenRouter provider with source-only fallback (`lib/ai/*`)
+- Full route set (ask, evidence, sources, status, tools, ground-reality)
+- 27 test files, 211 tests — all passing
+- CI workflow (`.github/workflows/ci.yml`)
+
+Known blockers requiring the maintainer:
+- **Vercel deployment protection checkpoint** — both `postalmind-ai` and `postalmind-ai_drci` projects are behind a human-verification checkpoint (KPSDK). API routes return the checkpoint HTML instead of JSON. This must be disabled in the Vercel project settings (Settings → Deployment Protection → disable for API routes, or set to "Preview only").
+- **Duplicate Vercel project** — `postalmind-ai_drci` is a duplicate of `postalmind-ai`. The canonical project is `postalmind-ai`. The duplicate should be disconnected or deleted after confirming the canonical project serves the correct domain.
+- **No `GEMINI_API_KEY`** available in this environment → live AI cannot be tested here. Demo mode is fully functional; the OpenRouter path is code-reviewed and health-checked but not run against a live provider.

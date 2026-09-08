@@ -97,7 +97,7 @@ export function ImportClient() {
           summary: result.pii.summary as unknown as LocalView['pii']['summary'],
         },
         notes: [
-          'Processed locally on this device. Raw evidence is not sent to the AI provider.',
+          'Processed locally in this browser tab. Raw evidence is not sent to the AI provider.',
           'Nothing was saved. Parsing, classification, PII detection and hashing ran deterministically in your browser.',
           'Classifications are evidence categories, not legal findings.',
         ],
@@ -132,10 +132,10 @@ export function ImportClient() {
       <section className="card">
         <p className="label-strong">1 · Import</p>
         <p className="mt-1 text-[13px] text-muted">
-          Paste a WhatsApp chat export, or upload the <code>.txt</code>. It is analysed{' '}
-          <strong>locally on this device</strong> and <strong>not saved</strong> and{' '}
-          <strong>not sent to any AI provider or server</strong>.
-        </p>
+           Paste a WhatsApp chat export, or upload the <code>.txt</code>. It is analysed{' '}
+           <strong>locally in this browser tab</strong> and <strong>not saved</strong> and{' '}
+           <strong>not sent to any AI provider or server</strong>.
+         </p>
         <textarea
           className="field mt-3 min-h-[160px] resize-y font-mono text-[12px]"
           placeholder="12/03/2026, 21:15 - Name: message…"
@@ -179,8 +179,8 @@ export function ImportClient() {
       {data && (
         <>
           <p className="rounded border border-line bg-accent-soft p-3 text-[12.5px]" data-testid="local-badge">
-            Processed locally on this device. Raw evidence is not sent to the AI provider.
-          </p>
+             Processed locally in this browser tab. Raw evidence is not sent to the AI provider.
+           </p>
           <section className="card">
             <p className="label-strong">2 · What was detected</p>
             <dl className="mt-3 grid gap-3 text-[13px] sm:grid-cols-2 lg:grid-cols-4">

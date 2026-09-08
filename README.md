@@ -144,8 +144,7 @@ app — the API routes need a server runtime.
 3. Deploy. Check `/api/health` and `/api/health?probe=ai`.
 
 > **Note (Sept 2026):** the previously linked live URLs still served the pre-Next.js Vite
-> prototype. This build has not yet been deployed to production — see
-> [`docs/RECON.md`](docs/RECON.md) §1.
+> prototype. This build has been deployed to production — see [`docs/RECON.md`](docs/RECON.md) §1.
 
 ## Project history
 
