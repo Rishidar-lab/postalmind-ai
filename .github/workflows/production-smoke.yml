@@ -1,0 +1,103 @@
+name: Production Smoke
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BASE_URL: https://postalmind-ai.vercel.app
+    steps:
+      - name: Wait for production health
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 36); do
+            code=$(curl -sS -o /tmp/health.json -w '%{http_code}' "$BASE_URL/api/health" || true)
+            echo "Attempt $i: /api/health -> $code"
+            if [ "$code" = "200" ]; then
+              cat /tmp/health.json
+              jq -e '.status == "ok"' /tmp/health.json >/dev/null
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Production health never became public/healthy. Last response:"
+          cat /tmp/health.json || true
+          exit 1
+
+      - name: Verify homepage and security headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS "$BASE_URL/" -o /tmp/home.html
+          grep -q 'PostalMind' /tmp/home.html
+          curl -fsSI "$BASE_URL/api/health" -o /tmp/headers.txt
+          grep -qi '^x-content-type-options: nosniff' /tmp/headers.txt
+          grep -qi '^x-frame-options: DENY' /tmp/headers.txt
+          grep -qi '^referrer-policy: strict-origin-when-cross-origin' /tmp/headers.txt
+
+      - name: Verify sources API
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS "$BASE_URL/api/sources" -o /tmp/sources.json
+          jq -e '.sources | type == "array" and length > 0' /tmp/sources.json >/dev/null
+          jq -e '.passageCount > 0' /tmp/sources.json >/dev/null
+
+      - name: Verify grounded ASK in source-only/provider mode
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS -X POST "$BASE_URL/api/ask" \
+            -H 'content-type: application/json' \
+            --data '{"question":"What is TRCA for GDS?"}' \
+            -o /tmp/ask.json
+          jq -e '.answer | type == "string" and length > 0' /tmp/ask.json >/dev/null
+          jq -e '.classification == "VERIFIED" or .classification == "INFERENCE" or .classification == "UNVERIFIED" or .classification == "UNKNOWN"' /tmp/ask.json >/dev/null
+          jq -e '.mode | type == "string" and length > 0' /tmp/ask.json >/dev/null
+
+      - name: Verify chat SSE contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS -N --max-time 30 -X POST "$BASE_URL/api/chat" \
+            -H 'content-type: application/json' \
+            --data '{"messages":[{"role":"user","content":"What is RTI?"}]}' \
+            -o /tmp/chat.sse
+          grep -q '^event: delta' /tmp/chat.sse
+          grep -q '^event: meta' /tmp/chat.sse
+          grep -q '^event: done' /tmp/chat.sse
+
+      - name: Verify deterministic evidence endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS -X POST "$BASE_URL/api/evidence/parse" \
+            -H 'content-type: application/json' \
+            --data '{"text":"08/09/2026, 10:00 - Supervisor: Tomorrow everyone should complete 10 accounts.\n08/09/2026, 10:05 - Worker: Noted."}' \
+            -o /tmp/evidence.json
+          jq -e '.parse.messages | type == "array" and length > 0' /tmp/evidence.json >/dev/null
+          jq -e '.analysis' /tmp/evidence.json >/dev/null
+          jq -e '.timeline' /tmp/evidence.json >/dev/null
+
+      - name: Verify publication safety gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS -X POST "$BASE_URL/api/evidence/publication-check" \
+            -H 'content-type: application/json' \
+            --data '{"text":"Contact me at 9876543210 regarding this allegation.","sourceCited":false,"counterEvidenceConsidered":false,"contextRetained":false}' \
+            -o /tmp/publication.json
+          jq -e '.verdict == "BLOCK"' /tmp/publication.json >/dev/null
+          jq -e '.canExport == false' /tmp/publication.json >/dev/null
+
+      - name: Release verdict
+        run: echo 'PostalMind production smoke checks passed.'
