@@ -1,49 +1,40 @@
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
-  content: [
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
+  darkMode: ['class', '[data-theme="dark"]'],
+  content: ['./app/**/*.{js,ts,jsx,tsx,mdx}', './components/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Space Grotesk', 'sans-serif'],
+        serif: ['Georgia', "'Times New Roman'", 'Times', 'serif'],
+        sans: [
+          "'Inter'",
+          'system-ui',
+          '-apple-system',
+          "'Segoe UI'",
+          'Roboto',
+          "'Noto Sans Tamil'",
+          'sans-serif',
+        ],
+        mono: ["'IBM Plex Mono'", "'SF Mono'", 'Menlo', 'monospace'],
       },
       colors: {
-        violet: {
-          400: '#a78bfa',
-          500: '#8b5cf6',
-          600: '#7c3aed',
-          700: '#6d28d9',
-          800: '#5b21b6',
-          900: '#4c1d95',
-        },
-        cyan: {
-          400: '#22d3ee',
-          500: '#06b6d4',
-        },
+        paper: 'var(--paper)',
+        surface: 'var(--surface)',
+        ink: 'var(--ink)',
+        muted: 'var(--muted)',
+        faint: 'var(--faint)',
+        line: 'var(--line)',
+        accent: 'var(--accent)',
+        'accent-soft': 'var(--accent-soft)',
+        ok: 'var(--ok)',
+        warn: 'var(--warn)',
+        danger: 'var(--danger)',
+        info: 'var(--info)',
       },
-      animation: {
-        blink: 'blink 0.9s infinite',
-        'fade-in': 'fadeIn 0.5s ease-out',
-        'slide-up': 'slideUp 0.4s ease-out',
-      },
-      keyframes: {
-        blink: {
-          '0%, 100%': { opacity: '1' },
-          '50%': { opacity: '0' },
-        },
-        fadeIn: {
-          '0%': { opacity: '0', transform: 'translateY(10px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        slideUp: {
-          '0%': { opacity: '0', transform: 'translateY(20px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
+      maxWidth: {
+        prose: '68ch',
+        content: '1120px',
       },
     },
   },
