@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { listPassages, listSources } from '@/lib/sources/registry';
 import { SourceStatusChip } from '@/components/chips';
 import { canIndependentlyVerify, DOCUMENT_TYPES, SOURCE_CLASS_LABELS } from '@/lib/sources/types';
+import { isGenuinelyVerified } from '@/lib/sources/versioning';
 
 export const metadata: Metadata = {
   title: 'Source library',
@@ -41,60 +42,75 @@ export default function SourcesPage() {
       </header>
 
       <div className="space-y-3">
-        {sources.map((s) => (
-          <article key={s.id} className="card">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-lg">{s.title}</h2>
-              <SourceStatusChip value={s.status} />
-            </div>
-            <p className="mt-1 text-[13px] text-muted">
-              {s.authority}
-              {s.date ? ` · issued ${s.date}` : ''}
-              {s.effectiveDate && s.effectiveDate !== s.date ? ` · effective ${s.effectiveDate}` : ''}
-              {s.supersededDate ? ` · superseded ${s.supersededDate}` : ''}
-              {s.documentNumber ? ` · ${s.documentNumber}` : ''}
-            </p>
-            <p className="mt-2 text-[14px]">{s.summary}</p>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-[12px] text-faint">
-              <span className="badge normal-case tracking-normal">{prettyType(s.documentType)}</span>
-              <span
-                className="badge normal-case tracking-normal"
-                title={
-                  canIndependentlyVerify(s.sourceClass)
-                    ? 'Can independently establish an official rule once genuinely verified.'
-                    : 'Cannot independently establish an official rule, regardless of status.'
-                }
-              >
-                {SOURCE_CLASS_LABELS[s.sourceClass]}
-              </span>
-              <span>{passagesBySource[s.id] ?? 0} passage(s)</span>
-              {s.sha256 ? <span>sha256 recorded</span> : <span>no local mirror yet</span>}
-              {s.verifiedAt ? (
-                <span>verified {s.verifiedAt.slice(0, 10)}{s.verificationMethod ? ` (${s.verificationMethod})` : ''}</span>
-              ) : (
-                <span>not yet verified against primary document</span>
-              )}
-              {s.tags.slice(0, 5).map((t) => (
-                <span key={t} className="badge normal-case tracking-normal">
-                  {t}
+        {sources.map((s) => {
+          const verified = isGenuinelyVerified(s);
+          return (
+            <article key={s.id} className="card">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-lg">{s.title}</h2>
+                <SourceStatusChip value={s.status} />
+              </div>
+              <p className="mt-1 text-[13px] text-muted">
+                {s.authority}
+                {s.date ? ` · issued ${s.date}` : ''}
+                {s.effectiveDate && s.effectiveDate !== s.date ? ` · effective ${s.effectiveDate}` : ''}
+                {s.supersededDate ? ` · superseded ${s.supersededDate}` : ''}
+                {s.documentNumber ? ` · ${s.documentNumber}` : ''}
+              </p>
+              <p className="mt-2 text-[14px]">{s.summary}</p>
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-[12px] text-faint">
+                <span className="badge normal-case tracking-normal">{prettyType(s.documentType)}</span>
+                <span
+                  className="badge normal-case tracking-normal"
+                  title={
+                    canIndependentlyVerify(s.sourceClass)
+                      ? 'Can independently establish an official rule once genuinely verified.'
+                      : 'Cannot independently establish an official rule, regardless of status.'
+                  }
+                >
+                  {SOURCE_CLASS_LABELS[s.sourceClass]}
                 </span>
-              ))}
-            </div>
-            {s.sections.length > 0 && (
-              <p className="mt-2 text-[12px] text-faint">Sections: {s.sections.join(' · ')}</p>
-            )}
-            {s.sourceUrl && (
-              <a
-                href={s.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-block text-[13px] text-accent underline underline-offset-2"
-              >
-                Primary document ↗
-              </a>
-            )}
-          </article>
-        ))}
+                <span>{passagesBySource[s.id] ?? 0} passage(s)</span>
+                {s.pageCount ? <span>{s.pageCount} page{s.pageCount !== 1 ? 's' : ''}</span> : <span>page count unknown</span>}
+                {s.sha256 ? (
+                  <span title={s.sha256}>sha256 {s.sha256.slice(0, 12)}…</span>
+                ) : (
+                  <span>no local mirror yet</span>
+                )}
+                {s.verifiedAt ? (
+                  <span>
+                    verified {s.verifiedAt.slice(0, 10)}
+                    {s.verificationMethod ? ` (${s.verificationMethod})` : ''}
+                    {s.verifiedPages.length > 0 ? ` · pages ${s.verifiedPages.join(', ')}` : ''}
+                  </span>
+                ) : (
+                  <span>not yet verified against primary document</span>
+                )}
+                {s.supersededDate && <span className="badge normal-case tracking-normal" style={{ borderColor: 'var(--warn)', color: 'var(--warn)' }}>superseded</span>}
+                {verified && <span className="badge normal-case tracking-normal chip chip-verified">genuinely verified</span>}
+                {s.versions.length > 0 && <span>{s.versions.length} version(s)</span>}
+                {s.tags.slice(0, 5).map((t) => (
+                  <span key={t} className="badge normal-case tracking-normal">
+                    {t}
+                  </span>
+                ))}
+              </div>
+              {s.sections.length > 0 && (
+                <p className="mt-2 text-[12px] text-faint">Sections: {s.sections.join(' · ')}</p>
+              )}
+              {s.sourceUrl && (
+                <a
+                  href={s.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-block text-[13px] text-accent underline underline-offset-2"
+                >
+                  Primary document ↗
+                </a>
+              )}
+            </article>
+          );
+        })}
       </div>
 
       <section className="card text-[13px] text-muted">

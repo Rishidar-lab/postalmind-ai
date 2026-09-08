@@ -38,33 +38,44 @@ app/
     evidence/cases/[id]/   GET — case + items + timeline + audit
 
 lib/
-  config.ts                env parsing, demo-mode detection, OpenRouter primary/fallback model
-  http.ts                  bounded body reading, hashed client id, error helpers
-  rate-limit.ts            in-process fixed-window limiter
-  ai/                      Provider interface, openrouter.ts (+ model-override for the quality-gate
-                           fallback), demo.ts, index.ts (getProvider/getFallbackProvider)
-  ask/answer.ts            retrieve → constrain → quality-gate → classify → cite → rationale/limits
-  sources/                 types.ts (SourceRecord + sourceClass + canIndependentlyVerify),
-                           trust.ts (suggestSourceClass, verificationViolations),
-                           registry.ts (lexical retrieval; allVerified enforces sourceClass),
-                           diff.ts (deterministic word-level LCS diff for /changes)
-  evidence/                types, whatsapp, hash, pii, redaction, classify,
-                           strength, timeline, publication, audit, ingest,
-                           patterns.ts (Target Pressure Analyzer 2.0 — deterministic
-                           cross-day pattern detection, never a legal conclusion)
-  store/                   CaseStore interface, memory.ts, seed.ts, index.ts
-  storage/                 IndexedDB vault (schema.ts/db.ts — v2 adds the `workday` store),
-                           case-store, evidence-store, audit-store, backup
-  tools/rti.ts             deterministic RTI draft generator
-  tools/workday.ts         GDS Workday Log — local IndexedDB diary + weekly/monthly chronology
-  demo/                    synthetic Mela WhatsApp export
+   config.ts                env parsing, demo-mode detection, OpenRouter primary/fallback model
+   http.ts                  bounded body reading, hashed client id, error helpers
+   rate-limit.ts            in-process fixed-window limiter
+   ai/                      Provider interface, openrouter.ts (+ model-override for the quality-gate
+                            fallback), demo.ts, index.ts (getProvider/getFallbackProvider)
+   ask/answer.ts            retrieve → constrain → quality-gate → classify → cite → rationale/limits
+   sources/                 types.ts (SourceRecord + sourceClass + canIndependentlyVerify),
+                            trust.ts (suggestSourceClass, verificationViolations),
+                            registry.ts (lexical retrieval; retrieveVerified for VERIFIED-only),
+                            diff.ts (deterministic word-level LCS diff for /changes),
+                            ingest.ts (PDF ingestion pipeline),
+                            versioning.ts (change detection, source versioning),
+                            verify.ts (human verification gate logic)
+   evidence/                types, whatsapp, hash, pii, redaction, classify,
+                            strength, timeline, publication, audit, ingest,
+                            patterns.ts (Target Pressure Analyzer 2.0 — deterministic
+                            cross-day pattern detection, never a legal conclusion)
+   store/                   CaseStore interface, memory.ts, seed.ts, index.ts
+   storage/                 IndexedDB vault (schema.ts/db.ts — v2 adds the `workday` store),
+                            case-store, evidence-store, audit-store, backup
+   tools/rti.ts             deterministic RTI draft generator
+   tools/workday.ts         GDS Workday Log — local IndexedDB diary + weekly/monthly chronology
+   demo/                    synthetic Mela WhatsApp export
 
 content/
-  sources.ts               SourceRecord[] (metadata → official docs; sourceClass assigned per record)
-  corpus.ts                CorpusPassage[] (retrieval text; UNVERIFIED/DEMO)
-  changes.ts               RuleChange[] — starts empty, same honest pattern as corrections.ts
-  corrections.ts           Correction[] — severity-typed, starts empty
-  linkedin/                Ground Reality LinkedIn content pack (manual publish only)
+   sources.ts               SourceRecord[] (metadata → official docs; sourceClass assigned per record)
+   corpus.ts                CorpusPassage[] (retrieval text; UNVERIFIED/DEMO)
+   changes.ts               RuleChange[] — starts empty, same honest pattern as corrections.ts
+   corrections.ts           Correction[] — severity-typed, starts empty
+   linkedin/                Ground Reality LinkedIn content pack (manual publish only)
+
+scripts/
+   sources-verify.mjs       Maintainer CLI verification gate (npm run sources:verify)
+
+app/api/sources/
+   ingest/route.ts          POST — ingest a PDF, compute SHA-256, extract pages, generate UNVERIFIED passages
+   verify/route.ts          POST/GET — verify passages, check verification state
+   version/route.ts         POST/GET — change detection, version history, version comparison
 
 components/                 site chrome + client islands + shared views (claim-card.tsx,
                             rule-diff-client.tsx, workday-client.tsx, sw-register.tsx, …)
@@ -111,6 +122,76 @@ question
 
 Client then does redaction preview (pure function) and feeds a draft to
 `/api/evidence/publication-check`.
+
+## Source Vault — primary-document verification
+
+### Architecture target
+
+```
+official document
+   ↓
+ingest (POST /api/sources/ingest)
+   ↓
+SHA-256 hash
+   ↓
+text extraction (pdf-parse, page-preserving)
+   ↓
+page-aware segmentation
+   ↓
+metadata validation
+   ↓
+human verification gate (npm run sources:verify / POST /api/sources/verify)
+   ↓
+VERIFIED source record
+   ↓
+VERIFIED corpus passages
+   ↓
+ASK retrieval (retrieveVerified)
+   ↓
+page/section citations
+```
+
+### Absolute rule
+
+A document must **NEVER** automatically become VERIFIED merely because it was
+downloaded from a URL or parsed successfully. Verification requires an
+explicit maintainer action.
+
+### Ingestion pipeline (`lib/sources/ingest.ts`)
+
+1. Size limit (50 MB hard cap)
+2. MIME validation (magic bytes, not extension)
+3. SHA-256 of original bytes
+4. Page-preserving text extraction (pdf-parse, no OCR fallback)
+5. Normalisation without destroying page boundaries
+6. Deterministic output: `DocumentIngestionResult`
+7. Security: HTML/script stripped, prompt-injection patterns detected
+
+Derived extraction is stored separately from original document metadata.
+
+### Verification gate (`scripts/sources-verify.mjs`, `POST /api/sources/verify`)
+
+- Presents source metadata, SHA-256, page text, proposed passage
+- Maintainer explicitly approves each passage or source
+- Only then can `status = VERIFIED`, `verifiedAt`, `verificationMethod` be set
+
+### Immutability / change detection (`lib/sources/versioning.ts`)
+
+If the same canonical URL returns different bytes:
+- Compute new SHA-256
+- Do NOT overwrite silently
+- Mark as changed/new version
+- Retain old version
+- Invalidate verification of new bytes until re-reviewed
+
+### ASK integration
+
+A VERIFIED answer may only rely on passages that satisfy BOTH:
+- `passage.status === VERIFIED`
+- `source.sourceClass` can independently verify the claim
+
+An UNVERIFIED passage must never silently elevate an answer to VERIFIED.
+`retrieveVerified()` enforces this at retrieval time.
 
 ## Persistence: current vs. target
 

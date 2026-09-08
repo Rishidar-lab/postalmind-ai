@@ -12,10 +12,12 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "content:check": "node scripts/content-check.mjs",
+    "sources:verify": "node scripts/sources-verify.mjs",
     "verify": "npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
     "next": "15.5.25",
+    "pdf-parse": "^2.4.5",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },

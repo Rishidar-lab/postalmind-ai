@@ -64,6 +64,15 @@ export function verificationViolations(sources: SourceRecord[]): string[] {
       if (!s.verifiedAt) {
         out.push(`${s.id}: marked VERIFIED but has no verifiedAt timestamp recorded.`);
       }
+      if (!s.verificationMethod) {
+        out.push(`${s.id}: marked VERIFIED but has no verificationMethod recorded.`);
+      }
+      if (s.verifiedPages.length > 0 && s.pageCount != null) {
+        const pc = s.pageCount;
+        if (s.verifiedPages.some((p) => p < 1 || p > pc)) {
+          out.push(`${s.id}: verifiedPages contains page numbers outside 1..pageCount.`);
+        }
+      }
     }
     if (s.verifiedAt && !s.verificationMethod) {
       out.push(`${s.id}: has verifiedAt but no verificationMethod recorded.`);
@@ -73,6 +82,9 @@ export function verificationViolations(sources: SourceRecord[]): string[] {
     }
     if (s.sourceClass === 'DEMO' && s.status !== 'DEMO') {
       out.push(`${s.id}: sourceClass DEMO must have status DEMO, not ${s.status}.`);
+    }
+    if (s.status === 'VERIFIED' && s.verifiedAt && s.verifiedPages.length === 0 && s.pageCount && s.pageCount > 1) {
+      out.push(`${s.id}: marked VERIFIED but no individual pages verified (verifiedPages is empty).`);
     }
   }
   return out;

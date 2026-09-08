@@ -41,6 +41,91 @@ export type DocumentType = (typeof DOCUMENT_TYPES)[number];
 export const SOURCE_STATUSES = ['VERIFIED', 'UNVERIFIED', 'DEMO'] as const;
 export type SourceStatus = (typeof SOURCE_STATUSES)[number];
 
+/** Verification method recorded by the maintainer. */
+export const VERIFICATION_METHODS = [
+  'manual-primary-document-check',
+  'automated-hash-match',
+] as const;
+export type VerificationMethod = (typeof VERIFICATION_METHODS)[number];
+
+/** A version of a source document — enables change tracking. */
+export interface SourceVersion {
+  versionId: string;
+  sourceId: string;
+  sha256: string;
+  localFilename: string;
+  mimeType: string;
+  byteLength: number;
+  pages: number | null;
+  retrievedAt: string | null;
+  /** If this version replaced a previous one, the previous version's ID. */
+  supersedesVersionId: string | null;
+  /** When this version was first ingested. */
+  ingestedAt: string;
+}
+
+export interface SourceRecord {
+  id: string;
+  title: string;
+  authority: string;
+  documentType: DocumentType;
+  /** Instrument/circular/order/gazette number as printed on the document. Null if not yet recorded — never fabricated. */
+  documentNumber: string | null;
+  /** Publication/issue date (ISO, may be year-only "2020"). Also referred to as "date issued". */
+  date: string | null;
+  /** Date the instrument takes effect, if different from `date`. */
+  effectiveDate: string | null;
+  /** Date this instrument was superseded or withdrawn, if known. Null = not known to be superseded. */
+  supersededDate: string | null;
+  sourceUrl: string | null;
+  /** Canonical URL used for change detection — if different bytes are retrieved from this URL later, the change is flagged. */
+  canonicalUrl: string | null;
+  localPath: string | null;
+  localFilename: string | null;
+  mimeType: string | null;
+  sha256: string | null;
+  pageCount: number | null;
+  /** Known section/heading labels within the document, for citation anchors. */
+  sections: string[];
+  status: SourceStatus;
+  /**
+   * Editorially assigned when the source is added — never inferred silently
+   * at render/answer time. See `canIndependentlyVerify`. Use
+   * `suggestSourceClass` (lib/sources/trust.ts) only as a sanity check on a
+   * declared value, never as the value itself.
+   */
+  sourceClass: SourceClass;
+  /** ISO timestamp a maintainer actually checked this against the primary document, if ever. */
+  verifiedAt: string | null;
+  /** How it was verified, e.g. "line-by-line against Gazette PDF, page 4". Required if verifiedAt is set. */
+  verificationMethod: string | null;
+  /** Free-text notes from the maintainer during verification. */
+  verificationNotes: string | null;
+  /** Page numbers that have been individually verified (subset of 1..pageCount). */
+  verifiedPages: number[];
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+  /** One-line description of what the document covers. */
+  summary: string;
+  /** Historical versions of this source document (for change detection). */
+  versions: SourceVersion[];
+}
+
+/** A passage extracted from a primary document during ingestion. */
+export interface DocumentPassage {
+  id: string;
+  sourceId: string;
+  section: string | null;
+  page: number | null;
+  text: string;
+  status: SourceStatus;
+  tags: string[];
+  keywords: string[];
+  /** SHA-256 of this passage's text for integrity. */
+  sha256: string | null;
+}
+
 export const SOURCE_CLASSES = [
   'PRIMARY_OFFICIAL',
   'PRIMARY_JUDICIAL',
@@ -80,44 +165,6 @@ export const INDEPENDENTLY_VERIFIABLE_CLASSES: readonly SourceClass[] = [
 
 export function canIndependentlyVerify(sourceClass: SourceClass): boolean {
   return INDEPENDENTLY_VERIFIABLE_CLASSES.includes(sourceClass);
-}
-
-export interface SourceRecord {
-  id: string;
-  title: string;
-  authority: string;
-  documentType: DocumentType;
-  /** Instrument/circular/order/gazette number as printed on the document. Null if not yet recorded — never fabricated. */
-  documentNumber: string | null;
-  /** Publication/issue date (ISO, may be year-only "2020"). Also referred to as "date issued". */
-  date: string | null;
-  /** Date the instrument takes effect, if different from `date`. */
-  effectiveDate: string | null;
-  /** Date this instrument was superseded or withdrawn, if known. Null = not known to be superseded. */
-  supersededDate: string | null;
-  sourceUrl: string | null;
-  localPath: string | null;
-  sha256: string | null;
-  pageCount: number | null;
-  /** Known section/heading labels within the document, for citation anchors. */
-  sections: string[];
-  status: SourceStatus;
-  /**
-   * Editorially assigned when the source is added — never inferred silently
-   * at render/answer time. See `canIndependentlyVerify`. Use
-   * `suggestSourceClass` (lib/sources/trust.ts) only as a sanity check on a
-   * declared value, never as the value itself.
-   */
-  sourceClass: SourceClass;
-  /** ISO timestamp a maintainer actually checked this against the primary document, if ever. */
-  verifiedAt: string | null;
-  /** How it was verified, e.g. "line-by-line against Gazette PDF, page 4". Required if verifiedAt is set. */
-  verificationMethod: string | null;
-  tags: string[];
-  createdAt: string;
-  updatedAt: string;
-  /** One-line description of what the document covers. */
-  summary: string;
 }
 
 export interface CorpusPassage {

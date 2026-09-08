@@ -38,7 +38,8 @@ So PostalMind is **evidence-first**. It is built to be able to tell you:
 | **Know your status** (`/status`) | Short, source-linked takes on GDS status, engagement rules, TRCA and leave. |
 | **Ground Reality** (`/ground-reality`) | An evidence-led editorial series — every claim carrying its source, basis and qualification. |
 | **Tools** (`/tools`) | Deterministic RTI application drafter; incident timeline generator. |
-| **Sources** (`/sources`) | The document library PostalMind cites, with status and links. |
+| **Sources** (`/sources`) | The document library PostalMind cites, with status, hash fingerprint, issuing authority, page count, and verification history. |
+| **Verify** (`npm run sources:verify`) | Maintainer CLI to review and approve passages against primary documents before they become VERIFIED. |
 
 ### The current real-world case: `PM-GDS-MELA-2026-09-10`
 
@@ -83,7 +84,50 @@ Persistence: in-memory demo store now; Postgres/Prisma is the documented product
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-## Privacy
+## Source Vault
+
+PostalMind's core integrity guarantee: **VERIFIED means genuinely verified** against
+a primary document, never just "downloaded successfully".
+
+### Verification pipeline
+
+```
+PRIMARY PDF
+  → SHA-256 hash
+  → page-preserving text extraction
+  → page-aware passage generation (all UNVERIFIED)
+  → human verification gate (npm run sources:verify)
+  → VERIFIED passage (maintainer approves)
+  → retrieval (VERIFIED only)
+  → VERIFIED answer (page/section citation)
+```
+
+### Key rules
+
+1. **A document is NEVER automatically VERIFIED** just because it was downloaded
+   from a URL or parsed successfully. Verification requires an explicit maintainer
+   action.
+2. **Only PRIMARY_OFFICIAL, PRIMARY_JUDICIAL, and PARLIAMENTARY_OFFICIAL**
+   sources can independently establish an official rule — even when VERIFIED.
+3. **Changed bytes invalidate verification.** If the same canonical URL later
+   returns different bytes, a new version is created and the old version is
+   retained. The new version starts as UNVERIFIED until re-reviewed.
+4. **No fabricated metadata.** Missing document numbers, page counts, and dates
+   are left null — never hallucinated.
+
+### Ingestion
+
+Maintainers ingest PDFs via the API or CLI:
+```bash
+npm run sources:verify -- gds-ce-rules-2020   # interactive verification gate
+```
+
+The ingestion pipeline validates MIME type, enforces size limits, computes
+SHA-256, extracts text page-by-page, sanitises HTML/script content, and
+detects prompt-injection patterns — treating document text as DATA, never
+instructions.
+
+See [`docs/SOURCE-POLICY.md`](docs/SOURCE-POLICY.md) for the full source policy.
 
 - WhatsApp parsing, classification, PII detection, redaction, hashing and the publication
   check all run **locally in your request**. Evidence text is **not** sent to any AI
@@ -109,9 +153,10 @@ npm run dev                         # http://localhost:3000
 ```bash
 npm run lint        # eslint (next/core-web-vitals)
 npm run typecheck   # tsc --noEmit
-npm run test        # vitest — 80+ unit tests
+npm run test        # vitest — 241 unit tests
 npm run build       # next build
 npm run verify      # all of the above
+npm run sources:verify -- <source-id>  # interactive verification gate
 ```
 
 ### Environment variables

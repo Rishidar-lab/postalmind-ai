@@ -23,6 +23,21 @@ export function listPassages(): CorpusPassage[] {
   return CORPUS;
 }
 
+/**
+ * Retrieve only VERIFIED passages from sources that can independently
+ * establish an official rule. Used by the ASK pipeline when a
+ * VERIFIED answer is required.
+ */
+export function retrieveVerified(query: string, opts: RetrieveOptions = {}): RetrievedPassage[] {
+  const all = retrieve(query, opts);
+  return all.filter(
+    (p) =>
+      p.status === 'VERIFIED' &&
+      canIndependentlyVerify(p.source.sourceClass) &&
+      p.source.status === 'VERIFIED',
+  );
+}
+
 const STOPWORDS = new Set([
   'the', 'a', 'an', 'of', 'to', 'in', 'is', 'are', 'for', 'on', 'and', 'or', 'my', 'me', 'i',
   'what', 'how', 'do', 'does', 'can', 'about', 'with', 'as', 'at', 'by', 'be', 'this', 'that',
