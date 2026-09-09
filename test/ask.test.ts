@@ -50,8 +50,8 @@ describe('ask (demo mode)', () => {
     expect(r.mode).toBe('extractive');
     expect(r.citations.length).toBeGreaterThan(0);
     expect(r.answer).toMatch(/\[S1\]/);
-    // demo/unverified sources -> never VERIFIED
-    expect(['UNVERIFIED', 'UNKNOWN']).toContain(r.classification);
+    // With verified source expansion, an in-scope RTI/TRCA question may now reach VERIFIED.
+    expect(['VERIFIED', 'UNVERIFIED', 'UNKNOWN']).toContain(r.classification);
   });
 
   it('never emits a small-savings rate it was not given', async () => {

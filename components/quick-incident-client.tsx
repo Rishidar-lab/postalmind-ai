@@ -131,10 +131,20 @@ export function QuickIncidentClient() {
               Source
             </label>
             <select id="qi-source" className="field mt-1" value={source} onChange={(e) => setSource(e.target.value as QuickIncidentSource)}>
-              <option value="whatsapp">WhatsApp</option>
+              <option value="whatsapp">WhatsApp message</option>
+              <option value="screenshot">Screenshot</option>
+              <option value="call">Phone call note</option>
+              <option value="verbal">Verbal instruction note</option>
               <option value="in-person">In person</option>
-              <option value="call">Call</option>
               <option value="notice">Notice / order</option>
+              <option value="target">Target instruction</option>
+              <option value="individual-target">Individual target</option>
+              <option value="office-target">Office target</option>
+              <option value="peer-comparison">Peer comparison</option>
+              <option value="after-hours">After-hours contact</option>
+              <option value="threat">Threat / consequence</option>
+              <option value="follow-up">Follow-up demand</option>
+              <option value="explanation">Explanation sought</option>
               <option value="other">Other</option>
             </select>
           </div>

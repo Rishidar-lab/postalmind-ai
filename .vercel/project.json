@@ -1,0 +1,7 @@
+{
+  "projectName": "postalmind-ai",
+  "canonicalUrl": "https://postalmind-ai.vercel.app",
+  "note": "Canonical production project. The duplicate preview project 'postalmind-ai_drci' must be disconnected/deleted ONLY after this canonical project serves /, /api/health, /api/ask, evidence pages and mobile layout correctly. Deployment protection (KPSDK checkpoint) must be disabled in Vercel project settings (Settings → Deployment Protection → disable for API routes / set to 'Preview only') so API routes return JSON instead of the checkpoint HTML. Framework preset: Next.js. Build command: npm run build. No static export (API routes require server runtime).",
+  "deploymentProtectionFixed": false,
+  "verifiedOn": "2026-09-09"
+}

@@ -17,7 +17,12 @@
 import { classifyMessage } from './classify';
 import type { EvidenceCategory, EvidenceItem, EvidenceStrength, SpeakerRole } from './types';
 
-export const QUICK_INCIDENT_SOURCES = ['whatsapp', 'in-person', 'call', 'notice', 'other'] as const;
+export const QUICK_INCIDENT_SOURCES = [
+  'whatsapp', 'screenshot', 'call', 'verbal',
+  'target', 'individual-target', 'office-target', 'peer-comparison',
+  'after-hours', 'threat', 'follow-up', 'explanation',
+  'in-person', 'notice', 'other',
+] as const;
 export type QuickIncidentSource = (typeof QUICK_INCIDENT_SOURCES)[number];
 
 export interface QuickIncidentInput {

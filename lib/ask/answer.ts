@@ -93,6 +93,10 @@ export interface AskResult {
   notice: string;
   /** Claims removed or rewritten by the claim gate (with reasons). Empty for VERIFIED answers. */
   uncitedClaimWarnings: string[];
+  /** The effective/verification date exposed for time-sensitive answers. */
+  asOf: string;
+  /** AS OF line shown for rules, rates, or any source with an effective date. */
+  temporalNotice: string;
   /** WHY THIS ANSWER — a deterministic, factual account of the retrieval/classification basis. Never model-generated. */
   rationale: string;
   /** WHAT THIS DOES NOT ESTABLISH — always populated, even for VERIFIED. Never model-generated. */
@@ -429,6 +433,16 @@ const PREMISE_KIND_LABEL: Record<string, string> = {
   percent: 'a percentage figure',
 };
 
+function computeAsOf(passages: RetrievedPassage[]): { asOf: string; temporalNotice: string } {
+  const dates = passages
+    .map((p) => p.source.effectiveDate || p.source.date)
+    .filter((d): d is string => !!d)
+    .sort();
+  const asOf = dates.length > 0 ? dates[dates.length - 1] : 'unknown';
+  const notice = dates.length > 0 ? `As of ${asOf}. Verify against current official source for any time-sensitive matter.` : 'No effective date recorded for cited sources — verify directly.';
+  return { asOf, temporalNotice: notice };
+}
+
 function unknownResult(
   answer: string,
   retrieval: RetrievalConfidence,
@@ -448,6 +462,8 @@ function unknownResult(
     uncitedClaimWarnings: [],
     rationale: buildRationale(retrieval, 'none', 'UNKNOWN', 0, premiseKind),
     limits: buildLimits('UNKNOWN', retrieval, 0),
+    asOf: 'unknown',
+    temporalNotice: 'No verified source with an effective date was retrieved for this question. Verify directly against official sources.',
   };
 }
 
@@ -550,6 +566,7 @@ export async function ask(question: string, opts: AskOptions = {}): Promise<AskR
       uncitedClaimWarnings: removed.map((c) => `${c.text} — ${c.reasons.join('; ')}`.slice(0, 200)),
       rationale: buildRationale(retrieval, 'extractive', classification, sourceCount),
       limits: buildLimits(classification, retrieval, 0),
+      ...computeAsOf(citedPassages),
     };
   }
 
@@ -598,6 +615,7 @@ export async function ask(question: string, opts: AskOptions = {}): Promise<AskR
         uncitedClaimWarnings: [],
         rationale: buildRationale(retrieval, 'model', 'UNKNOWN', sourceCount),
         limits: buildLimits('UNKNOWN', retrieval, 0),
+        ...computeAsOf(citedPassages),
       };
     }
 
@@ -620,6 +638,7 @@ export async function ask(question: string, opts: AskOptions = {}): Promise<AskR
         uncitedClaimWarnings: [],
         rationale: buildRationale(retrieval, 'model', 'UNKNOWN', sourceCount),
         limits: buildLimits('UNKNOWN', retrieval, 0),
+        ...computeAsOf(citedPassages),
       };
     }
 
@@ -734,6 +753,7 @@ export async function ask(question: string, opts: AskOptions = {}): Promise<AskR
       uncitedClaimWarnings: [...removalWarnings, ...fabricationWarnings],
       rationale: buildRationale(retrieval, 'model', classification, sourceCount),
       limits: buildLimits(classification, retrieval, fabricatedRefs.length),
+      ...computeAsOf(citedPassages),
     };
   } catch (err) {
     if (err instanceof ProviderError) {
@@ -768,6 +788,7 @@ export async function ask(question: string, opts: AskOptions = {}): Promise<AskR
         uncitedClaimWarnings: [],
         rationale: buildRationale(retrieval, 'extractive', 'UNVERIFIED', sourceCount),
         limits: buildLimits('UNVERIFIED', retrieval, 0),
+        ...computeAsOf(citedPassages),
       };
     }
     throw err;
