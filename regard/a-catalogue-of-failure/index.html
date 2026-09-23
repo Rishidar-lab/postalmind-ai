@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A Catalogue of Failure — Regard</title>
+<meta name="description" content="A first-person record of repeated failure across education, bug bounty hunting, AI tooling, projects, applications and money—and why I am still building.">
+<style>
+:root{--bg:#f6f2ea;--ink:#171717;--muted:#6b655d;--rule:#cfc7bb;--accent:#7a2e2e}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Georgia,"Times New Roman",serif;line-height:1.75}
+header,main,footer{width:min(760px,calc(100% - 36px));margin:auto}
+header{padding:34px 0 18px;border-bottom:1px solid var(--rule)}
+.brand{font:600 13px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase}
+h1{font-size:clamp(2.7rem,8vw,5.6rem);line-height:.96;letter-spacing:-.045em;margin:52px 0 16px}
+.subtitle{font-size:1.2rem;line-height:1.5;color:var(--muted);margin:0 0 18px}
+.meta{font:500 12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.notice{margin:28px 0;padding:14px 16px;border-left:3px solid var(--accent);background:rgba(122,46,46,.05);font-size:.95rem}
+article{padding:36px 0 72px}
+p{font-size:1.08rem;margin:0 0 1.35em}
+h2{font-size:2rem;line-height:1.15;margin:2.6em 0 .8em;letter-spacing:-.025em}
+strong{font-weight:700}
+blockquote{margin:2em 0;padding-left:1.2em;border-left:3px solid var(--accent);font-style:italic}
+footer{border-top:1px solid var(--rule);padding:28px 0 48px;color:var(--muted);font-size:.9rem}
+a{color:inherit}
+@media(max-width:600px){body{line-height:1.68}h1{margin-top:38px}p{font-size:1.02rem}h2{font-size:1.65rem}}
+</style>
+</head>
+<body>
+<header>
+<div class="brand">Regard</div>
+<h1>A Catalogue of Failure</h1>
+<p class="subtitle">What I learned from missed marks, rejected reports, lost stipends, unfinished systems, and refusing to disappear.</p>
+<div class="meta">Rishi · 23 September 2026 · Personal essay</div>
+<div class="notice">Content note: repeated failure, rejection, financial strain, career uncertainty, and relationship loss.</div>
+</header>
+<main>
+<article>
+<p>I used to think failure would arrive as one unmistakable event.</p>
+
+<p>A failed examination. A rejected application. A broken project. A report closed by a triager. A relationship ending. A bank balance telling me to stop pretending I could afford the next experiment.</p>
+
+<p>Instead, failure became cumulative.</p>
+
+<p>It arrived in percentages, status labels, unanswered applications, GitHub branches, invoices, terminal errors, rejected vulnerability reports, half-built products, and the quiet humiliation of watching somebody else receive the result I had wanted.</p>
+
+<p>This is not a success story disguised as a failure story.</p>
+
+<p>Some of these things simply failed.</p>
+
+<p>And I need a record of that.</p>
+
+<h2>The first pattern: being capable was never the same as being consistent</h2>
+
+<p>I was the student who could do very well and then suddenly not look like the same person on paper.</p>
+
+<p>My tenth-standard result was strong. My twelfth-standard result was not the continuation that people would have predicted from it.</p>
+
+<p>Later I moved through anesthesia technology, then computing, then AI, cybersecurity, software, philosophy, neuroscience, economics, and whatever problem had enough gravitational pull to keep me awake.</p>
+
+<p>From outside, that can look like curiosity.</p>
+
+<p>From inside, it has often felt like fragmentation.</p>
+
+<p>I completed a BCA in 2026, but a degree does not automatically convert a nonlinear life into a clean professional narrative. I still had to explain gaps, changes in direction, unfinished ambitions, and why someone working in one field kept trying to build a future in another.</p>
+
+<p>At one point, a graded neural-imaging assignment returned <strong>79.50%</strong> when the pass mark was <strong>80%</strong>.</p>
+
+<p>Half a percentage point.</p>
+
+<p>There are grand failures that make good stories. Then there are failures like that: tiny, bureaucratic, mathematically precise. They do not care how much the subject matters to you.</p>
+
+<p>I remember that number because it represents something larger. Sometimes the distance between “almost” and “accepted” is absurdly small, but institutions still have to draw a line somewhere.</p>
+
+<p>I was on the wrong side of it.</p>
+
+<h2>Bug bounty taught me that effort has no exchange rate</h2>
+
+<p>Cybersecurity gave me one of the harshest versions of this lesson.</p>
+
+<p>I went into authorized bug bounty work wanting evidence strong enough that nobody could dismiss it: reproducible proof, exact scope, measurable impact, clean reports, responsible disclosure.</p>
+
+<p>Reality was less romantic.</p>
+
+<p>Findings could be interesting without being exploitable.</p>
+
+<p>A strange response could be intended behavior.</p>
+
+<p>A difference in authentication could be architecture rather than vulnerability.</p>
+
+<p>A theoretical break could collapse the moment it met the real protocol state.</p>
+
+<p>A report could be reproducible and still be judged low impact, informational, duplicate, out of scope, or simply not convincing enough.</p>
+
+<p>In one run involving Zoho Deluge-related testing, I accumulated <strong>17 rejected reports</strong> across bounty channels.</p>
+
+<p>Seventeen.</p>
+
+<p>Whatever the individual reasons were, the outcome I experienced was simple: <strong>0 accepted out of 17</strong>.</p>
+
+<p>That number hurt more than any motivational advice could fix.</p>
+
+<p>There were other hunts where hours of reasoning ended with the most boring possible conclusion: no validated issue. I would begin with an exciting hypothesis and end by proving that the system was behaving exactly as designed.</p>
+
+<p>That is technically useful work.</p>
+
+<p>It does not pay a bounty.</p>
+
+<p>I also learned something uncomfortable about AI-assisted security research. A powerful model can help read code, map attack surfaces, generate tests, challenge assumptions and compress research time. It can also make a weak idea look sophisticated if I stop validating it manually.</p>
+
+<p>I had moments where my own summary of the situation was basically: <strong>nothing worked for AI bug hunting in OpenCode</strong>.</p>
+
+<p>That sentence was frustration, but it contained a real correction.</p>
+
+<p>Automation was not going to replace judgment.</p>
+
+<p>My brother's old-school manual way of looking at systems became more important, not less. The useful arrangement was not “AI finds bugs for us.” It was human skepticism plus machine-scale assistance, with both sides capable of telling the other side that an idea was wrong.</p>
+
+<p>That is slower than the fantasy.</p>
+
+<p>It is also real.</p>
+
+<h2>I built too many things because each new thing felt like an exit</h2>
+
+<p>When one route failed, I often responded by building another route.</p>
+
+<p>MORPHIA.</p>
+<p>IFA — Info For All.</p>
+<p>PostalMind.</p>
+<p>Luneon.</p>
+<p>SourceLens.</p>
+<p>Regard.</p>
+
+<p>Other experiments, agents, dashboards, automation systems, local-model setups and prototypes.</p>
+
+<p>Some became serious repositories. Some reached working states. Some stalled. Some were parked because infrastructure, money, deployment, verification or plain attention ran out before the idea did.</p>
+
+<p>At one point the pattern became impossible to ignore: I had become very good at beginning.</p>
+
+<p>Beginning is seductive because a new repository contains no history of disappointment.</p>
+
+<p>There is no failed CI run yet.</p>
+<p>No deployment error.</p>
+<p>No user who does not care.</p>
+<p>No reviewer saying the evidence is insufficient.</p>
+<p>No bill.</p>
+<p>No abandoned branch.</p>
+
+<p>Then the project becomes real, and reality begins collecting rent.</p>
+
+<p>Regard itself was not exempt. Its publishing and database work hit CI failures around SQL behavior and PostgreSQL role-switching before those failures were corrected and the pipeline finally turned green.</p>
+
+<p>That mattered to me precisely because it was not magic.</p>
+
+<p>The build failed.</p>
+<p>We diagnosed it.</p>
+<p>We changed it.</p>
+<p>It passed.</p>
+
+<p>That is a more useful definition of progress than pretending competent people never break things.</p>
+
+<h2>The internship that made failure public</h2>
+
+<p>In September 2026, I completed an AI internship program and submitted my work expecting that, at minimum, the effort had put me in the race for the performance stipend.</p>
+
+<p>Then the winners were announced.</p>
+
+<p>Three other people.</p>
+
+<p>Not me.</p>
+
+<p>The stipend was <strong>₹10,000</strong>.</p>
+
+<p>I remember looking at their names and asking the question people usually hide behind polite language:</p>
+
+<blockquote>Where did I fuck up?</blockquote>
+
+<p>That moment was useful because envy and disappointment are diagnostic if I do not turn them into resentment.</p>
+
+<p>Maybe their work was better.</p>
+<p>Maybe their presentation was clearer.</p>
+<p>Maybe they solved a more legible problem.</p>
+<p>Maybe they understood the evaluator better.</p>
+<p>Maybe I spread myself too thin.</p>
+<p>Maybe I confused technical effort with product value.</p>
+
+<p>The certificate I received did not answer any of those questions. A certificate can document participation. It cannot retroactively turn losing into winning.</p>
+
+<p>I had lost the stipend.</p>
+
+<p>That was the fact.</p>
+
+<p>So I started comparing, learning and trying to understand what the selected projects did differently.</p>
+
+<p>Failure became data again.</p>
+
+<h2>Money makes experimentation less philosophical</h2>
+
+<p>It is easy to romanticize persistence when nobody asks what persistence costs.</p>
+
+<p>AI subscriptions cost money.</p>
+<p>Developer platforms cost money.</p>
+<p>Cloud infrastructure costs money.</p>
+<p>Hardware costs money.</p>
+<p>Mistakes cost money.</p>
+
+<p>Even “free” tools often cost time, limits, credits, attention, or the frustration of discovering that the feature you built your workflow around is not actually available on the free tier.</p>
+
+<p>I experimented with mining as a supplementary income path. There were moments when the numbers were so small that they became almost comic. One tracked balance was only <strong>₹57.47</strong>.</p>
+
+<p>A high-end GPU can make a person feel technically powerful while the economics quietly remind them that electricity, depreciation and market conditions exist.</p>
+
+<p>At other points I was thinking about hardware costing lakhs of rupees while my actual available cash was measured in hundreds of dollars and my normal monthly income was nowhere near the fantasy budget.</p>
+
+<p>That gap between the machine I wanted and the life I actually had was another kind of failure: not moral failure, not intellectual failure, just constraint.</p>
+
+<p>Reality saying: <strong>not yet</strong>.</p>
+
+<h2>Applications are another machine that can say nothing</h2>
+
+<p>I applied for internships and development roles while trying to pivot deeper into IT.</p>
+
+<p>Some applications remained pending.</p>
+<p>Some produced no meaningful result.</p>
+<p>Some were incomplete.</p>
+<p>Some opportunities looked promising and then simply became another tab in the browser history.</p>
+
+<p>This is a strange type of failure because it often contains no rejection letter dramatic enough to fight against.</p>
+
+<p>Silence is administratively efficient.</p>
+
+<p>It is psychologically expensive.</p>
+
+<p>The temptation is to reinterpret every silence as a verdict about personal worth.</p>
+
+<p>That is analytically useless.</p>
+
+<p>An application outcome measures a particular selection process at a particular time. It does not provide a complete theory of a person.</p>
+
+<p>I have to remind myself of that because I have repeatedly made the opposite mistake.</p>
+
+<h2>Personal failure is harder because there is no reproducible test case</h2>
+
+<p>Technical failure gives me logs.</p>
+
+<p>Relationships do not.</p>
+
+<p>There was a relationship I wanted to become part of my future. It ended instead.</p>
+
+<p>No unit test explains why two people cannot become the life one of them imagined.</p>
+
+<p>No Git commit lets me revert the exact moment where possibility became closure.</p>
+
+<p>That kind of loss forced me toward philosophy in a way academic curiosity never could.</p>
+
+<p>I kept returning to the idea that purpose is not something society hands me after verifying that I have behaved correctly. I have to make it through choices, responsibility and presence.</p>
+
+<p>That does not mean inventing a comforting meaning for everything that hurts.</p>
+
+<p>Some losses remain losses.</p>
+<p>Some people leave.</p>
+<p>Some futures do not happen.</p>
+
+<p>The philosophical task, for me, is not to prove that every failure was necessary.</p>
+
+<p>It is to decide what I do after it exists.</p>
+
+<h2>I also failed by treating tools as rescue</h2>
+
+<p>I have spent too much time believing that the next model, the next coding agent, the next subscription tier, the next local setup, the next GPU or the next orchestration layer would finally remove friction from my work.</p>
+
+<p>Then credits disappeared.</p>
+<p>APIs expired.</p>
+<p>Payments failed.</p>
+<p>CLI tools broke.</p>
+<p>Disk space vanished.</p>
+<p>Containers conflicted.</p>
+<p>Models refused tasks.</p>
+<p>Models confidently suggested things that still had to be verified.</p>
+<p>Agents produced impressive-looking output that could not survive contact with a real environment.</p>
+
+<p>I still use these systems.</p>
+
+<p>I am an AI-assisted developer because they genuinely expand what I can build.</p>
+
+<p>But I no longer want the theology of the perfect tool.</p>
+
+<p>A tool is not salvation.</p>
+<p>A model can accelerate me and still be wrong.</p>
+<p>A human can be experienced and still miss something.</p>
+
+<p>The work is the process that forces both to meet reality.</p>
+
+<h2>My worst habit was converting every setback into a referendum on myself</h2>
+
+<p>When I lost, I rarely said, “This attempt failed.”</p>
+
+<p>I said, “I failed again.”</p>
+
+<p>Those sentences look similar.</p>
+
+<p>They are not.</p>
+
+<p>The first describes an event.</p>
+
+<p>The second tries to turn an event into an identity.</p>
+
+<p>I have done this with exams, internships, bug bounties, money, projects, relationships and jobs.</p>
+
+<p>It is intellectually lazy because it compresses different causal systems into one explanation: me.</p>
+
+<p>A bounty report can fail because the impact is weak.</p>
+<p>A CI pipeline can fail because SQL semantics are wrong.</p>
+<p>An application can fail because another candidate fits better.</p>
+<p>A relationship can fail because two people do not share the same future.</p>
+<p>A mining plan can fail because the economics are terrible.</p>
+
+<p>These events can teach me things about my decisions without proving that I am a defective object.</p>
+
+<p>That distinction is not optimism.</p>
+
+<p>It is better causal reasoning.</p>
+
+<h2>The project cemetery is also evidence</h2>
+
+<p>I used to be embarrassed by the number of things I had started.</p>
+
+<p>Now I want to preserve the cemetery.</p>
+
+<p>The abandoned scripts.</p>
+<p>The private repos.</p>
+<p>The dead product names.</p>
+<p>The bug reports nobody paid for.</p>
+<p>The prompts that burned credits.</p>
+<p>The dashboards that never found users.</p>
+<p>The applications that did not become jobs.</p>
+<p>The certificates that did not become careers.</p>
+<p>The systems that worked locally and failed in deployment.</p>
+<p>The branches where I learned something and then never merged it.</p>
+
+<p>A portfolio normally removes all of this.</p>
+
+<p>It presents the polished endpoint.</p>
+
+<p>Regard should not.</p>
+
+<p>If Regard means anything as a publishing project, it should be capable of storing the unflattering evidence too.</p>
+
+<h2>Why I am publishing this now</h2>
+
+<p>Because I am still in the middle of it.</p>
+
+<p>I do not have the luxury of writing from the distant future after everything has worked out.</p>
+
+<p>There is no guaranteed redemption chapter.</p>
+
+<p>I am still trying to move from my current work into a stronger technology career.</p>
+
+<p>I am still trying to make bug bounty research rigorous enough to earn recognition.</p>
+
+<p>I am still trying to finish products instead of merely starting them.</p>
+
+<p>I am still learning how to use AI without outsourcing my judgment to it.</p>
+
+<p>I am still learning how to live with ambitions that are materially larger than my current resources.</p>
+
+<p>I am still learning how to carry personal loss without turning it into permanent self-definition.</p>
+
+<p>And I am still capable of failing again.</p>
+
+<p>That sentence matters.</p>
+
+<p>A philosophy of failure that only works after success is useless to someone who has not succeeded yet.</p>
+
+<p>So this is the record from inside the uncertainty.</p>
+
+<p>I have lost stipends.</p>
+<p>I have missed marks.</p>
+<p>I have submitted reports that were rejected.</p>
+<p>I have chased bugs that were not bugs.</p>
+<p>I have built systems that broke.</p>
+<p>I have started too many projects.</p>
+<p>I have spent money badly.</p>
+<p>I have trusted tools too much.</p>
+<p>I have applied and heard nothing.</p>
+<p>I have watched imagined futures end.</p>
+<p>I have looked at other people's results and asked what they understood that I did not.</p>
+
+<p>None of that requires me to call the failures victories.</p>
+
+<p>They were failures.</p>
+
+<p>But they are not the end of the dataset.</p>
+
+<p>Tomorrow adds another row.</p>
+
+<p>And I am still here to write it.</p>
+</article>
+</main>
+<footer>
+<div><strong>Regard</strong> · Personal essay by Rishi · Published 23 September 2026</div>
+</footer>
+</body>
+</html>
