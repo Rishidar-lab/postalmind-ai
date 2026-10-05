@@ -77,7 +77,7 @@ Browser
   │                  GET  /api/evidence/cases[/:id]      → in-memory case store (demo-seeded)
   └─ /api/health  → app / ai / db / storage status (no secrets)
 
-Next.js 14 (App Router) · TypeScript strict · Tailwind · Vitest
+Next.js 15 (App Router) · TypeScript strict · Tailwind · Vitest
 AI provider: OpenRouter free-tier models (configurable) — optional; app runs in demo mode without it
 Persistence: in-memory demo store now; Postgres/Prisma is the documented production path
 ```
@@ -153,7 +153,7 @@ npm run dev                         # http://localhost:3000
 ```bash
 npm run lint        # eslint (next/core-web-vitals)
 npm run typecheck   # tsc --noEmit
-npm run test        # vitest — 241 unit tests
+npm run test        # vitest — 282 unit tests (31 files)
 npm run build       # next build
 npm run verify      # all of the above
 npm run sources:verify -- <source-id>  # interactive verification gate
